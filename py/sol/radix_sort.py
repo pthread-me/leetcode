@@ -55,8 +55,20 @@ def radix_sort(l: list[int]) -> list[int]:
 
     return res
 
+def radix_sort_with_neg(l: list[int]) -> list[int]:
+    pos = [e for e in l if e>=0]
+    neg = [-1* e for e in l if e<0]
+   
+    if len(pos) > 0:
+        pos = radix_sort(pos)
+    if len(neg) > 0:
+        neg = [-1*e for e in radix_sort(neg)]
+    
+    
+    return neg[::-1] + pos
+
 if __name__ == "__main__":
 #    s= Solution()
 #    r = s.isAnagram("anagram", "nagaram")
-    r = radix_sort([107, 45, 75, 90, 802, 24, 2, 66])
+    r = radix_sort_with_neg([107, -45, 75, 90, 802, 24, 2, 66])
     print(r)
