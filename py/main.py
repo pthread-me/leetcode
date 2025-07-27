@@ -1,69 +1,46 @@
 #! /usr/bin/python3
 
-# Use a stack for iterative reversal
-# we can also use the call stack as the, well, stack. via recursion
 
-
-from typing import Self
-
-
-#Definition for singly-linked list.
-class ListNode:
-    def __init__(self, val: int=0, next:Self|None=None):
-        self.val:int = val
-        self.next: Self | None = next
+def check_win(s:str) -> bool:
+    for e in s:
+        if e == "0":
+            return True
+    return False
 
 class Solution:
-    def iter_reverseList(self, head: ListNode | None) -> ListNode | None:
-        if head is None:
-            return
-        stack: list[ListNode] = []
+    def canReach(self, s: str, minJump: int, maxJump: int) -> bool:
+        if len(s) <= 1:
+            return True
+        if s[-1] == "1":
+            return False
 
-        cur:ListNode | None = head
-        while cur is not None:
-            stack.append(cur)
-            cur = cur.next
-            stack[-1].next = None
+        start = minJump
+        end = maxJump
 
-        new_head = stack.pop()
-        cur = new_head
-        while len(stack) > 0:
-            cur.next = stack.pop()
-            cur = cur.next
+        while end < len(s)-1:
+            print(s[start: end+1])
+            if check_win(s[start: end+1]) == False:
+                return False
 
-        return new_head
+            while not s[start] == "0" and start <= end:
+                start +=1
 
+            if end>= len(s):
+                end = len(s) -1
+            else:
+                while not s[end] == "0" and end>=start:
+                    end -=1
 
-    def reverseList(self, head: ListNode | None) -> ListNode | None:
-        if head == None:
-            return
-        new_head = self.T(head, head)[1] 
-        head.next = None
-        
-        return new_head
-
-    def T(self, head: ListNode, origin: ListNode) -> tuple[ListNode, ListNode]:
-        if head.next == None:
-            return (head, head)
-
-        res = self.T(head.next, origin)
-        res[0].next = head
-        origin = res[1]
-         
-        return (head, origin)
-
-
+            start += minJump
+            end += maxJump
     
+        return check_win(s[start: end+1])
+        
+
+
 if __name__ == "__main__":    
     S = Solution()
     input: str = open("input.txt").read().strip()
-    h = ListNode(1, ListNode(2, ListNode(3, ListNode(4, ListNode(5, None)))))
-    h = S.reverseList(h)
-
-    cur = h
-    while cur is not None:
-        print(cur.val)
-        cur = cur.next
-   
-
-
+    
+    r = S.canReach("00111010", 3, 5)
+    print(r)
