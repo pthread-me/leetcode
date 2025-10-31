@@ -1,36 +1,38 @@
 #! /usr/bin/python3
 
+from typing import Self
 
 
-# We first need to mirror on the horizontal axis, then transpose on the diagonal 
-# make sure when transposing we dont swap the pair i,j twice
+# We start with a range of possible values being -inf and +inf
+# with every traversal the range shrinks
+# if any node breaks the range then the tree is not valid
+
+
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val:int=0, left:None|Self=None, right:None|Self=None):
+        self.val:int = val
+        self.left: None|Self = left
+        self.right: None|Self = right
+
 class Solution:
-    def rotate(self, A: list[list[int]]) -> None:
-        n = len(A)-1
+    def isValidBST(self, root: None|TreeNode) -> bool:
+        def rec(x: TreeNode|None, l: float, h: float) -> bool:
+            if x is None:
+                return True
+
+            if l < x.val < h:
+                return rec(x.left, l, min(x.val, h)) and rec(x.right, max(l, x.val), h)
+            else:
+                return False
+
         
-        for i in range(0, len(A)//2):
-            for j in range(0, len(A)):
-                temp = A[i][j]
-                A[i][j] = A[n-i][j]
-                A[n-i][j] = temp
-       
-        print()
-        for e in A:
-            print(e)       
-        
-        for i in range(0, len(A)):
-            for j in range(i, len(A)):
-                temp = A[i][j]
-                A[i][j] = A[j][i]
-                A[j][i] = temp
+        return rec(root, float('-inf'), float('inf'))
+
 
 
 if __name__ == "__main__":
-    s = Solution()
-    A = [[1,2,3],[4,5,6],[7,8,9]]
-    for e in A:
-        print(e)
-    r = s.rotate(A)
-    print()
-    for e in A:
-        print(e)
+    S = Solution()
+    t = TreeNode(5, TreeNode(1, None, TreeNode(4)), TreeNode(7))
+    r = S.isValidBST(t)
+    print(r)

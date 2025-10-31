@@ -1,0 +1,44 @@
+		#	m	i	s	s	i c	
+.		T	F	F	F	F	F	F	
+m		F	T	F	F	F	F	F			
+i		F	F	T	F	F	F	F
+s*	F	F	F	T	T	F	F
+i		F	F	F	F	F	F
+
+
+		#	a	b	c	c	d	d	d
+.		T	F	F	F	F	F	F	F
+a		F	T	F	F	F	F	F	F
+b		F	F	T	F	F	F	F	F
+c		F	F	F	T	F	F	F	F
+d*	F	F	F	T	T	
+d		F	
+
+Solution:
+matrix A of booleans with a starting row [T, F..] and column [T,F,F..]
+
+for A[i][j]:
+	if p[i] is *:
+		if above is true then we dont consume and set to true
+		if left or top-left is true we must be equal as this means we will consume
+		
+		A[i][j] = A[i-1][j] or (p[i] == s[j] and (A[i-1][j-1] or A[i][j-1]))
+
+	else:
+		A[i][j] = (p[i] == [j]) and (A[i-1][j-1])
+	
+
+
+			c	c	c
+		T	F	F	F
+.*	T	T	T	T
+.		F	T	T	T
+.		F	F	T	T
+.		F	F	F	T
+
+
+			a
+		T	F
+a		F	T
+b*	T	
+a		F
