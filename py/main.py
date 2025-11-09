@@ -1,53 +1,59 @@
 #! /usr/bin/python3
-#from typing import Self
+from include.leetcode_structs import *
+import heapq
 
-# Starting with the permutation solution (q46)
-# we again have elements compete for possitions which we then swap to and append
-# ex:
-#   [1,2,3]
-#   we start with res =  [[]]
-#   then for i = 0 we swap and take nums[:0] 
-#   A) [1,2,3] -> [1,2,3] = [1]
-#   B) [1,2,3] -> [2,1,3] = [2]
-#   C) [1,2,3] -> [3,2,1] = [3]
-#
-#   In the second recursive level i = 1 on A:
-#       [1,2,3] -> [1,2,3] = [1,2]
-#       [1,2,3] -> [1,3,2] = [1,3]
-#
-#   In the second recursive level i=1 on B:
-#       [2,1,3] -> [2,1,3] = [2,1]
-#       [2,1,3] -> [2,3,1] = [2,3]
-#
-#
-#   Observe the [1,2] == [2,1] when dealing with combinations, so in the second level
-#   on the second element (B) we want to ignore the first result (of the swap) and only start adding from the second
-#   onwards. similarly with the 3rd.
-#
-#   So we have an sp offset which dicates the index of the elements where the swapping begins
 class Solution:
-    def subsets(self, nums: list[int]) -> list[list[int]]:
-        res: list[list[int]] = [[]] 
-        nums.sort()
+    def repeatLimitedString(self, s: str, repeatLimit: int) -> str:
+        def key_to_char(a: int) -> str:
+            return chr(-a)
+        def char_to_key(c: str) -> int:
+            return - ord(c)
 
-        def sub(i:int, sp: int):
-            if nums[:i] not in res:
-                res.append(nums[:i])
+        freq: dict[str, int] = {}
+        max_heap: list[int] = []
+        res: list[str] = []
             
-            for j in range(i+sp, len(nums)):
-                nums[i], nums[j] = nums[j], nums[i]
-                sub(i+1, sp)
-                sp += 1
-                nums[i], nums[j] = nums[j], nums[i]
+        for e in s:
+            if e not in freq:
+                freq[e] = 1
+                heapq.heappush(max_heap, char_to_key(e))
+            else:
+                freq[e] = freq[e] + 1
 
-        sub(0, 0)
-        return res
+        while len(max_heap) > 1:
+            c1: str = key_to_char(heapq.heappop(max_heap))
+            c2: str = key_to_char(heapq.heappop(max_heap))
+
+            mul: int = min(freq[c1], repeatLimit)
+            freq[c1] -= mul
+
+            if freq[c1] > 0:
+                res= res + ([c1] * mul) + [c2]
+                freq[c2] -= 1
+                heapq.heappush(max_heap, char_to_key(c1))
+            else:
+                mul = min(freq[c2], repeatLimit)
+                res
+
+            if freq[c2] > 0:
+                heapq.heappush(max_heap, char_to_key(c2))
 
         
-if __name__ == "__main__":
-    s = Solution()
-    l = [4,1,0, 2]
-    r = s.subsets(l)
-    print(r)
+        if len(max_heap)> 0:
+            last: str = key_to_char(heapq.heappop(max_heap))
+            if last != res[-1]:
+                res = res + ([last] * min(freq[last], repeatLimit))
 
+        return "".join(res)
+
+                    
+
+
+
+if __name__ == "__main__":
+    S= Solution()
+    s = "cczazcc"
+    repeatLimit = 3
+    r = S.repeatLimitedString(s, repeatLimit)
+    print(r)
     

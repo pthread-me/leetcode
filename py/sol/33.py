@@ -1,39 +1,33 @@
 #! /usr/bin/python3
-
-# Binary search on rotated array
-
+from typing import Self
 
 class Solution:
-    def search(self, nums: list[int], target: int) -> int:
-        i:int = 0
-        j:int = len(nums)-1
+    def isIsomorphic(self, s: str, t: str) -> bool:
+        if len(s) != len(t):
+            return False
 
+        s_to_t: dict[str, str] = {}
+        t_to_s: dict[str, str] = {}
 
-        while i<=j:
-            mid = (j-i)//2 + i
-            print(i,j,mid)
-            if nums[mid] == target:
-                return mid
-            elif nums[i] == target:
-                return i
-            elif nums[j] == target:
-                return j
-
-
-            if nums[i] < nums[mid]:
-                if nums[i]<= target < nums[mid]:
-                    j=mid-1
-                else:
-                    i=mid+1
+        for i in range(len(s)):
+            if s[i] not in s_to_t and t[i] not in t_to_s:
+                s_to_t[s[i]] = t[i]
+                t_to_s[t[i]] = s[i]
             else:
-                if nums[mid] < target <= nums[j]:
-                    i = mid+1
-                else:
-                    j= mid-1
-        
-        return -1
+                if s[i] in s_to_t and s_to_t[s[i]] != t[i]:
+                    return False
+                elif t[i] in t_to_s and t_to_s[t[i]] != s[i]:
+                    return False
+
+                    
+        return True
+
+
+              
 if __name__ == "__main__":
-    S= Solution()
-    l = [4,3,2,1]
-    r = S.search(l, 1)
+    S = Solution()
+    s: str = "egg"
+    t:str = "baba"
+    r = S.isIsomorphic(s,t)
     print(r)
+

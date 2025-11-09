@@ -1,9 +1,34 @@
 #! /usr/bin/python3
 #from typing import Self
         
-        
+       
+
 
 class Solution:
+    def combinationSum(self, candidates: list[int], target: int) -> list[list[int]]:
+        res: list[list[int]] = []
+        if target in candidates:
+            res.append([target])
+            candidates.remove(target)
+
+        def backtrack(temp: list[int], sum: int, c_offset:int):
+            if sum == target and sorted(temp) not in res:
+                res.append(sorted(temp[:]))
+            elif sum < target:
+                for i in range(c_offset, len(candidates)):
+                    temp.append(candidates[i])
+                    backtrack(temp, sum+candidates[i], i)
+                    _ = temp.pop()
+            else:
+                return
+        
+        backtrack([], 0, 0)
+        return res
+
+
+
+
+class Solution_dumb:
     def combinationSum(self, candidates: list[int], target: int) -> list[list[int]]:
         candidates = list(set(candidates))
         dp: list[list[list[int]]] = [ [] for _ in range(target+1)]

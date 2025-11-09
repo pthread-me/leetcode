@@ -1,0 +1,49 @@
+#! /usr/bin/python3
+from typing import Self
+
+# Boyer moore voting: https://www.geeksforgeeks.org/theory-of-computation/boyer-moore-majority-voting-algorithm/
+
+# Think of a stack: we want to collect as many pairs with distinct elements as possible:
+# if the stack is empty we append an element (set e1 to e and v1=1)
+# if the stack has an element and is equal we append it (v1+=1)
+# if the stack has an element and is diff we can extract a distinct pair (e1,e) so v1-=1
+
+# after the first loop, if there existed a majority element then it would be e1, if there was no majority then 
+# it would be the last distinct element added to the stack, to ensure that e1 is the majority we perform a final scan and count
+
+# this can be repeated with as many stack to find n/3 (3 stack) n/4 (4 stacks) etc majorities
+class Solution:
+    def majorityElement(self, nums: list[int]) -> int:
+        threshold: int = len(nums) // 2
+        count: int = 0
+
+        e1:int = -1
+        c1:int = 0
+        
+        for e in nums:
+            print(e1, c1)
+            if e1 == e:
+                c1 +=1
+            elif c1 > 0:
+                c1 -= 1
+            else:
+                e1 = e
+                c1 = 1
+        
+        
+        for e in nums:
+            if e == e1:
+                count +=1
+
+        return e1 if count > threshold else -1
+
+
+
+
+
+
+if __name__ == "__main__":
+    S= Solution()
+    l = [3,2,3]
+    r = S.majorityElement(l)
+    print(r)
