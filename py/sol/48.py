@@ -1,38 +1,36 @@
 #! /usr/bin/python3
+from include.leetcode_structs import *
+import heapq
 
-from typing import Self
-
-
-# We start with a range of possible values being -inf and +inf
-# with every traversal the range shrinks
-# if any node breaks the range then the tree is not valid
-
-
-# Definition for a binary tree node.
-class TreeNode:
-    def __init__(self, val:int=0, left:None|Self=None, right:None|Self=None):
-        self.val:int = val
-        self.left: None|Self = left
-        self.right: None|Self = right
+# this is not in place, since we answer seperatly then copy
+# link has an inplace solution: https://leetcode.com/problems/rotate-image/solutions/18872/a-common-method-to-rotate-the-image-by-s-tygg/
 
 class Solution:
-    def isValidBST(self, root: None|TreeNode) -> bool:
-        def rec(x: TreeNode|None, l: float, h: float) -> bool:
-            if x is None:
-                return True
-
-            if l < x.val < h:
-                return rec(x.left, l, min(x.val, h)) and rec(x.right, max(l, x.val), h)
-            else:
-                return False
-
+    def rotate(self, matrix: list[list[int]]) -> None:
+        """
+        Do not return anything, modify matrix in-place instead.
+        """
         
-        return rec(root, float('-inf'), float('inf'))
+        A: list[list[int]] = [[-1 for _ in matrix[0]] for _ in matrix]
+
+        for i in range(0, len(matrix[0])):
+            for j in range(0, len(matrix)):
+                A[j][~i] = matrix[i][j]
+
+        for i in range(0, len(matrix[0])):
+            for j in range(0, len(matrix)):
+                matrix[i][j] = A[i][j]
+
 
 
 
 if __name__ == "__main__":
-    S = Solution()
-    t = TreeNode(5, TreeNode(1, None, TreeNode(4)), TreeNode(7))
-    r = S.isValidBST(t)
-    print(r)
+    S= Solution()
+    m = [[1,2,3],[4,5,6],[7,8,9]]
+    for e in m:
+        print(e)
+    _ = S.rotate(m)
+    print()
+    for e in m:
+        print(e)
+    

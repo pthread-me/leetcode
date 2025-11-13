@@ -2,7 +2,11 @@
 from include.leetcode_structs import *
 
 
+# start by sorting the intervals so that the first starts first
+# for every remaining interval e, if the start of e <= the end of the last interval
+# in the res we merge, else they are seperate so we just append e
 
+# since we sorted them we know that every e' after e. e'[0] > e[0]
 class Solution:
     def merge(self, intervals: list[list[int]]) -> list[list[int]]:
         intervals.sort()
