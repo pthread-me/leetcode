@@ -3,6 +3,7 @@
 import heapq
 
 # My initial solution was a hashmap which works fine,
+
 # we can use a maxheap, first use a hashmap to find the frequency of the elements
 # then have a max_heap of pairs where we compare based on the freq
 # python only has a min heap so a trick we can use is to negate the frequecy (times -1)

@@ -4,24 +4,22 @@
 
 class Solution:
     def maxProfit(self, prices: list[int]) -> int:
-        prefix_sum = [0] + [prices[i] - prices[i-1] for i in range(1, len(prices))]    
+        if len(prices) <= 1:
+            return 0
 
-        if all([e>-1 for e in prefix_sum]):
-            return sum(prefix_sum)
-        elif all([e<0 for e in prefix_sum]):
-            return min(prefix_sum)
+        p: list[int] = [(prices[i] - prices[i-1]) for i in range(1, len(prices))]    
 
-       
-        best = 0
-        cur = 0
-       
-        for e in prefix_sum:
-            cur = max(cur + e, e)
-            best = max(best, cur)
+        maxP: int = p[0]
+        cur: int = p[0]
+        for i in range(1, len(p)):
+            if cur>=0:
+                cur += p[i]
+            else:
+                cur = p[i]
+            if maxP < cur:
+                maxP = cur
 
-        return best
-
-    
+        return maxP if maxP > 0 else  0
 
 if __name__ == "__main__":
     s = Solution()

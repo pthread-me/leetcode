@@ -6,7 +6,7 @@ import heapq
 # link has an inplace solution: https://leetcode.com/problems/rotate-image/solutions/18872/a-common-method-to-rotate-the-image-by-s-tygg/
 
 class Solution:
-    def rotate(self, matrix: list[list[int]]) -> None:
+    def rotate_not_in_place(self, matrix: list[list[int]]) -> None:
         """
         Do not return anything, modify matrix in-place instead.
         """
@@ -20,6 +20,17 @@ class Solution:
         for i in range(0, len(matrix[0])):
             for j in range(0, len(matrix)):
                 matrix[i][j] = A[i][j]
+
+
+    def rotate(self, matrix: list[list[int]]) -> None:
+        for i in range(0, len(matrix)//2):
+            matrix[i], matrix[~i] = matrix[~i], matrix[i]
+       
+        # Note the i+1
+        for i in range(0, len(matrix)):
+            for j in range(i+1, len(matrix[0])):
+                matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+
 
 
 
