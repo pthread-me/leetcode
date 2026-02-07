@@ -1,35 +1,44 @@
 #!/usr/bin/python
 
+import math
 class Solution:
-    def threeSumClosest(self, nums: list[int], target: int) -> int:
-        nums.sort()
-        res: float = float('inf')
-        res_diff = float('inf')
+    def longestValidParentheses(self, s: str) -> int:
+        s = s.lstrip(")").rstrip("(") # )
 
-        for i in range(len(nums)-2):
-            l,r = i+1, len(nums)-1
-            while l<r:
-                if abs(target - (nums[i]+nums[l]+nums[r])) < res_diff:
-                    res = nums[i]+nums[l]+nums[r]
-                    res_diff = abs(target - (nums[i]+nums[l]+nums[r]))
-
-                if nums[i]+nums[l]+nums[r] < target:
-                    l+=1
-                else:
-                    r-=1
-
-        return int(res)
-
-            
-
+        max_size = 0
+        count: int = 1
+        size: int = 1
         
+        i: int = 0
+        j: int = 1
 
+        while j < len(s):
+            if s[j] == "(": #)
+                size += 1
+                count += 1
+                continue
+
+            count -= 1
+            if count == 0 and size > max_size:
+                max_size = size
+                i+=1
+                j = i+1
+            elif count < 0:
+                while i<len(s) and s[i] == ")":
+                    i += 1
+                count = 1
+                size = 1
+                j = i+1
+            else:
+                j+=1
+                size += 1
+
+        return max_size
 
 if __name__ == "__main__":
-    s = Solution()
-    n = [4,0,5,-5,3,3,0,-4,-5]
-    t = -2
+    S: Solution = Solution()
+    s: str = ")()())"
 
-    r = s.threeSumClosest(n,t)
+    r = S.longestValidParentheses(s)
     print(r)
-
+    
