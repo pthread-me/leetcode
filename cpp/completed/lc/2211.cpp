@@ -121,55 +121,36 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
+/*
+ * Every car on the left moving left will never colide, same with 
+ * cars on the right moving right. once u trim these. we know that every car
+ * in between must collide (either with oposites or with stationaries)
+ * Since we ignore stationary cars (aka collisions with them only gives 1 for the
+ * moving car) then the final answer is the number of moving cars after the trim.
+ */
 
+class Solution {
+public:
+  int countCollisions(string_view dir) {
+    bool collision = true;
+    int n = dir.size();
+    int i=0;
+    int j=n-1;
+    
+    for(; i<n && dir[i]=='L'; ++i);
+    for(; j>-1 && dir[j]=='R'; --j);
+
+    if(i>=j) return 0;
+    int count  = 0;
+    for(int k=i; k<=j; k++){
+      if(dir[k]!='S') ++count;
+    }
+    return count;
+  }
+};
 
 int main(){
-  ll n, k;
-  cin >> n >> k;
-
-  vl nums{};
-  for(auto _: srv::iota(0, n)){
-    ll c; cin>>c;
-    nums.push_back(c); 
-  }
-
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
-
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
-  }
-
-  for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
-    }
-  }
-  
-  cout << *mex.begin() << " ";
-  for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
-  }
+  Solution s{};
+  string dir = "RLRSLL";
+  cout << s.countCollisions(dir);
 }

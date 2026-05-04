@@ -121,19 +121,11 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
+/*
+ * We make use of a map to keep track of counts and a set of pairs (count, val)
+ * to find the min. vals in count are stored as (-count, val) so begin becomes 
+ * the highest (alternativley use end())
+ */
 
 
 int main(){
@@ -146,30 +138,36 @@ int main(){
     nums.push_back(c); 
   }
 
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
+  auto custom_compare = [](pair<ll,ll> const& a, pair<ll,ll> const& b ) -> bool {
+    return a.second > b.second || a.first < b.first;
+  };
+  
+  set<pair<ll,ll>> lookup{};
+  map<ll, ll> freq{};
 
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
-  }
+
+  auto update_state = [&](ll val, ll inc) -> void{
+    auto old_pair = pair(-freq[val], val);
+    freq[val] += inc;
+    auto new_pair = pair(-freq[val], val);
+
+
+		lookup.erase(old_pair);
+    if(new_pair.first < 0) lookup.insert(new_pair);
+  };
 
   for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
-    }
+    update_state(nums[i], 1);
+  }
+
+
+  cout << lookup.begin()->second << " ";
+  for(ll i=k; i<n; ++i){
+    update_state(nums[i-k], -1); 
+    update_state(nums[i], 1);
+
+    //println("\nmap:{}\nset:{}", freq, lookup);
+    cout << lookup.begin()->second << " ";
   }
   
-  cout << *mex.begin() << " ";
-  for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
-  }
 }

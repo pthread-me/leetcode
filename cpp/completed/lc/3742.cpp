@@ -121,55 +121,70 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
 
+/*
+ *  A 3D dp solution, calculating the max we can reach each cell for a given
+ *  k
+ */
+
+class Solution {
+public:
+  int ninf = numeric_limits<int>::min() + 100'000;
+  int maxPathScore(vector<vector<int>>& grid, int k) {
+    int n = grid.size(); int m = grid[0].size();
+    vector<vector<vector<int>>>dp (n, vector<vector<int>>(m, vector<int>(k+1, ninf)));
+    
+    for(int l=0; l<=k; ++l){
+      dp[0][0][l] = 0; 
+    }
+
+    for(int i=1; i<m; ++i){
+      for(int l=0; l<=k; ++l){
+        if(grid[0][i] == 0){
+          dp[0][i][l] = dp[0][i-1][l];
+        }else if(l>0){
+          dp[0][i][l] = dp[0][i-1][l-1]; 
+          dp[0][i][l] = dp[0][i][l] >=0 ? dp[0][i][l] + grid[0][i] : ninf;
+        }
+      }
+    }
+    for(int i=1; i<n; ++i){
+      for(int l=0; l<=k; ++l){
+        if(grid[i][0] == 0){
+          dp[i][0][l] = dp[i-1][0][l];
+        }else if(l>0){
+          dp[i][0][l] = dp[i-1][0][l-1];
+            dp[i][0][l] = dp[i][0][l] >=0 ? dp[i][0][l] + grid[i][0] : ninf;
+        }
+      }
+    }
+
+    for(int i=1; i<n; ++i){
+      for(int j=1; j<m; ++j){
+        for(int l=0; l<=k; ++l){
+          if(grid[i][j] == 0){
+            dp[i][j][l] = max(dp[i-1][j][l], dp[i][j-1][l]);
+          }else if(l>0){
+            dp[i][j][l] = max(dp[i-1][j][l-1], dp[i][j-1][l-1]);
+            dp[i][j][l] = dp[i][j][l] >=0 ? dp[i][j][l] + grid[i][j] : ninf;
+          }
+        }
+      }
+    }
+    
+    for(int i=0; i<n; ++i){
+      for(int j=0; j<m; ++j){
+        println("({},{}): {}", i, j, dp[i][j]);
+      }
+    }
+    int res = *max_element(dp[n-1][m-1].begin(), dp[n-1][m-1].end());
+    return (res >=0 ? res : -1);
+  }
+};
 
 int main(){
-  ll n, k;
-  cin >> n >> k;
 
-  vl nums{};
-  for(auto _: srv::iota(0, n)){
-    ll c; cin>>c;
-    nums.push_back(c); 
-  }
-
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
-
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
-  }
-
-  for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
-    }
-  }
-  
-  cout << *mex.begin() << " ";
-  for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
-  }
+  Solution s{};
+  vector<vector<int>> grid{{0,0}, {0,0}};
+  cout << s.maxPathScore(grid, 0);
 }

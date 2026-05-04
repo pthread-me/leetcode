@@ -121,55 +121,43 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
-
+/**
+ *  A basic rolling window solution, we keep a vector of size k, and
+ *  rotate through it with the current window values to know which left 
+ *  val to subtract. keeping a cur sum to avoid O(n) accumulation.
+ *
+ *  solution is O(n) time O(k) space. there is a O(1) space sol i think
+ *  but wont bother.
+ */ 
 
 int main(){
   ll n, k;
   cin >> n >> k;
+  ll x, a, b, c;
+  cin >> x >> a >> b >> c;
+  ll cur = x;
+  ll res = 0;
 
-  vl nums{};
-  for(auto _: srv::iota(0, n)){
-    ll c; cin>>c;
-    nums.push_back(c); 
-  }
-
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
-
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
-  }
-
-  for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
-    }
-  }
+  auto next_val = [&](ll prev) -> ll {
+    return (a*prev + b) % c;
+  };
   
-  cout << *mex.begin() << " ";
-  for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
+  vl mem(k, 0);
+  mem[0] = x;
+  for(ll i=1; i<k; ++i){
+    mem[i] =  next_val(mem[i-1]);
+    cur += mem[i];
   }
+  res ^= cur;
+
+  for(ll i=0; i<n-k; ++i){
+    ll l = i%k;
+    ll r = (l+k-1 + k)%k; 
+
+    ll old_val = mem[l];
+    mem[l] = next_val(mem[r]);
+    cur = (cur - old_val + mem[l]);
+    res ^=cur;
+  }  
+  cout << res;
 }

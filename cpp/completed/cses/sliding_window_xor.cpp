@@ -121,55 +121,48 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
+
+/*
+ * Just like the sum solution, but we use the fact that A^A = 0, as a subtraction
+*/
 
 
 int main(){
   ll n, k;
   cin >> n >> k;
+  ll x, a, b, c;
+  cin >> x >> a >> b >> c;
+  ll cur = x;
+  ll res = 0;
 
-  vl nums{};
-  for(auto _: srv::iota(0, n)){
-    ll c; cin>>c;
-    nums.push_back(c); 
-  }
+  // seq generator
+  auto next_val = [&](ll prev) -> ll {
+    return (a*prev + b) % c;
+  };
 
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
 
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
-  }
 
+  vl mem(k, 0); 
+  ll prev_res = 0;
   for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
-    }
+    mem[i] = cur;
+    prev_res ^= cur;
+    cur = next_val(cur);
   }
-  
-  cout << *mex.begin() << " ";
-  for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
+  res ^= prev_res;
+
+  for(ll i=0; i<n-k; ++i){
+    ll l = i%k;
+    ll old_val = mem[l];
+    mem[l] = cur;
+
+    prev_res = prev_res ^ old_val ^ cur;
+    res ^= prev_res;
+
+    cur = next_val(cur);
   }
+
+  cout << res;
+
+
 }

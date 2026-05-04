@@ -121,55 +121,30 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
 
+/*
+ *  Simple 2 state keeping and parity check
+ */
+
+class Solution {
+public:
+  int countPartitions(vector<int>& nums) {
+    int n = nums.size();
+    int ls = 0;
+    int rs = accumulate(nums.begin(), nums.end(), 0);
+    int res =0;
+    
+    for(int i=0; i<n-1; ++i){
+      ls += nums[i];
+      rs -= nums[i];
+      if(ls%2 == rs%2) ++res;
+    }
+    return res;
+  }
+};
 
 int main(){
-  ll n, k;
-  cin >> n >> k;
-
-  vl nums{};
-  for(auto _: srv::iota(0, n)){
-    ll c; cin>>c;
-    nums.push_back(c); 
-  }
-
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
-
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
-  }
-
-  for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
-    }
-  }
-  
-  cout << *mex.begin() << " ";
-  for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
-  }
+  Solution s{};
+  vector<int> nums = {1,2,2};
+  cout << s.countPartitions(nums);
 }

@@ -84,7 +84,6 @@ auto print_vec(vector<T>& v) -> void{
   for(auto& e: v){
     cout << e << " ";
   }
-  cout <<"\n";
 }
 
 template<number T>
@@ -121,55 +120,44 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
-
+/*
+ *  This one is a super basic bottom up approach, foreach dimension we iterate
+ *  over the ways we can cut it (for index 1 to n/2 such that there are always
+ *  2 parts). then solve those 2 subsolutions.
+ *
+ *  Whats interesting is that the matrix is mirrored on its origin? so we
+ *  only solve one triangle. swaps are made so that we solve the triangle
+ *  at the left (when cutting the square matrix from tl to br)
+ */
 
 int main(){
-  ll n, k;
-  cin >> n >> k;
+  ll h, w;
+  cin >> h >> w;
+  if(h<w) swap(h,w);
+  vvl dp(h+1, vl(h+1,0));
+ 
+  auto lookup = [&](ll y, ll x) -> ll{
+    if(y<x) swap(y, x);
+    return dp[y][x];
+  };
 
-  vl nums{};
-  for(auto _: srv::iota(0, n)){
-    ll c; cin>>c;
-    nums.push_back(c); 
-  }
+  auto cut_and_eval = [&](ll i, ll j)->ll{
+    ll res = INF;
+    for(ll d=1; d<(i/2)+1; ++d){
+      res = min(res, lookup(d, j) + lookup(i-d, j)+1);
+    }
+    for(ll d=1; d<(j/2)+1; ++d){
+      res = min(res, lookup(i, d) + lookup(i, j-d)+1);
+    }
+    return res;
+  };
 
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
 
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
-  }
-
-  for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
+  for(ll i=1; i<=h; ++i){
+    for(ll j=1; j<=h && j!=i; ++j){
+      dp[i][j] = cut_and_eval(i, j); 
     }
   }
-  
-  cout << *mex.begin() << " ";
-  for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
-  }
+
+  cout << dp[h][w];
 }

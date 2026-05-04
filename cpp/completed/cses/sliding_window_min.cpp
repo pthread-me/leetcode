@@ -121,55 +121,57 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
+
+/*
+ *  The sol requires a decreasing mono queue (left to right view). such that
+ *  the top of the queue (left) is the min.
+ *
+ *  when adding an element we check if it is smaller than the e's in the queue
+ *  from the back, if so remove them then add, else just add it.
+ *
+ *  for every window we need to check if the cur min went out of the scope of the
+ *  window, to do this i store pairs holding the val and the pos. is i-pos == k-1
+ *  aka it is at the end of the cur window, we need to remove it for the next iter
+ */
 
 
 int main(){
   ll n, k;
   cin >> n >> k;
+  ll x, a, b, c;
+  cin >> x >> a >> b >> c;
+  ll cur = x;
+  ll count = 1;
+  ll res = 0;
 
-  vl nums{};
-  for(auto _: srv::iota(0, n)){
-    ll c; cin>>c;
-    nums.push_back(c); 
+  // seq generator
+  auto next_val = [&](ll prev) -> ll {
+    return (a*prev + b) % c;
+  };
+
+
+  deque<pair<ll,ll>> queue{};
+
+
+  // filling up the queue right before the fist window
+  for(ll i=0; i<k-1; ++i){
+    // if the back is greater, replace it
+    while(!queue.empty() && queue.back().first > cur) queue.pop_back();
+    queue.push_back(pair(cur, i));
+    cur = next_val(cur); 
   }
 
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
+  // iterating over windows
+  for(ll i=k-1; i<n; ++i){
+    while(!queue.empty() && queue.back().first > cur) queue.pop_back();
+    queue.push_back(pair(cur, i));
 
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
+    res ^= queue.front().first;
+
+    if( i-queue.front().second == k-1) queue.pop_front();
+    cur = next_val(cur); 
   }
 
-  for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
-    }
-  }
-  
-  cout << *mex.begin() << " ";
-  for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
-  }
+  cout << res;
+ 
 }

@@ -121,19 +121,9 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
+/*
+ * Super simple freq map. nlogn time obviously
+ */
 
 
 int main(){
@@ -146,30 +136,18 @@ int main(){
     nums.push_back(c); 
   }
 
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
-
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
-  }
-
+    
+  map<ll,ll> freq{};  
   for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
-    }
+    freq[nums[i]]++;
   }
-  
-  cout << *mex.begin() << " ";
+
+  cout << freq.size() << " ";
   for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
+    freq[nums[i]]++;
+    freq[nums[i-k]]--;
+    if(freq[nums[i-k]] == 0) freq.erase(nums[i-k]);
+
+    cout << freq.size() << " ";
   }
 }

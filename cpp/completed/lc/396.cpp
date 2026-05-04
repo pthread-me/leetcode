@@ -121,55 +121,57 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// This question was fun:
-//  use a set to find the mex, and make the obs that given a window
-//  of size k, the mex must be in the range [0,k+1]. 
-//  With this we now use a map for those values [0,k+1] and their frequencies
-//
-//
-//  for every element in the window, we remove it from the set and inc its freq.
-//  when moving past an element we dec its freq and if freq==0 it can be a mex
-//  so we reinsert it into the set.
-//  For each window the mex is the set's first element.
-//
-//  The observation here makes the runtime be nlogk average case when using
-//  unordered map, or nlogn worst-case when using map.
+/*
+ *  We observe the relation between iterations f(0) and f(1) then generalize.
+ *  take nums = a,b,c,d
+ *  then 
+ *  f(0) = a0 + b1 + c2 + d3
+ *  f(1) = a4 + b0 + c1 + d2
+ *
+ *  now f(0) - f(1) = -4a + b + c + d which is equal to -5a + (a+b+c+d)
+ *  so f(k+1) = f(k) + -n*r + sum(a..d)
+ *  here r is the removed element to r = nums[n-1-k]
+ *
+ *  in the impl I start k from 1 since we precal the base case so r = nums[n-k]
+ *
+ */
 
+class Solution {
+public:
+  int ninf = numeric_limits<int>::min();
+  int brute_maxRotateFunction(vector<int>& nums) {
+    int n = nums.size(); 
+    int max_val = ninf;
+
+    for(int r=0; r<n; ++r){
+      int cur = 0;
+      for(int i=0; i<n; ++i){
+        cur += nums[(i+r)%n] * ((i+r)-r);
+      }
+      max_val = max(max_val, cur);
+    }
+    return max_val;
+  }
+
+
+  int maxRotateFunction(vector<int>& nums){
+    int n = nums.size();
+    int sum = accumulate(nums.begin(), nums.end(), 0);  
+    vector<int> dp(n, 0);
+    for(int i=0; i<n; ++i) dp[0]+=nums[i]*i;
+
+    for(int k=1; k<n;++k){
+      dp[k] = dp[k-1] + sum - (n*nums[n-k]);
+    }
+
+    println("{}", dp);
+    return *max_element(dp.begin(), dp.end());
+  }
+
+};
 
 int main(){
-  ll n, k;
-  cin >> n >> k;
-
-  vl nums{};
-  for(auto _: srv::iota(0, n)){
-    ll c; cin>>c;
-    nums.push_back(c); 
-  }
-
-  set<ll> mex{};
-  unordered_map<ll,ll> freq{};
-
-  for(ll i=0; i<=k+1; ++i){
-    mex.insert(i);
-  }
-
-  for(ll i=0; i<k; ++i){
-    if(nums[i] <= k+1){
-      mex.erase(nums[i]);
-      freq[nums[i]]++;
-    }
-  }
-  
-  cout << *mex.begin() << " ";
-  for(ll i=k; i<n; ++i){
-    if(nums[i-k] <= k+1){
-      freq[nums[i-k]]--;
-      if(freq[nums[i-k]] == 0) mex.insert(nums[i-k]);
-    }
-    if(nums[i] <= k+1){
-      freq[nums[i]]++;
-      mex.erase(nums[i]);
-    }
-    cout << *mex.begin() << " ";
-  }
+  Solution s{};
+  vector<int> nums = {4,3,2,6};
+  cout << s.maxRotateFunction(nums);
 }
