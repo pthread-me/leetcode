@@ -1,6 +1,4 @@
 #include <bits/stdc++.h>
-#include <ext/pb_ds/tree_policy.hpp>
-#include <ext/pb_ds/assoc_container.hpp>
 
 using namespace std;
 
@@ -124,99 +122,71 @@ auto mymax(T& a, T& b, Rest&...args){
 //-----------------------------------------------------------------------------
 
 
-/*
- *  In the multiset solution, we keep 2 sets L and R, where every element
- *  l in L is <= every element r in R.
- *  this was we maintain an ordering (if we traverse L then R).
- *
- *  Further by maintaining the size of L to be equal to (k+1)/2 we garuntee
- *  that either k/2 or k/2 + 1 of the elements are in L (based on the parity of k
- *   we dont do (k/2)+1 immediatly since that puts us 1 off if k is even).
- *
- *   By maintaining the relation between L and R we have it that the rightmost 
- *   element in L is the median.
- *
- *   There is another solution using Policy based data structures PBDS, check it 
- *   out :)
- *
- */
-auto multiset_sol(vl& nums, ll n, ll k) -> void{
-  multiset<ll> L{};
-  multiset<ll> R{};
-  
-  for(ll i=0; i<k; ++i){
-    L.insert(nums[i]);
-  }
-  while(L.size() > (k+1)/2){
-    R.insert(*L.rbegin()); 
-    L.extract(*L.rbegin());
-  }
-
-
-  cout << *L.rbegin() << " ";
-  //println("L: {}\nR: {}\n", L, R);
-  for(ll i=k; i<n; ++i){
-    ll out = nums[i-k];
-    ll in = nums[i];
-
-    if(out <= *L.rbegin()) L.extract(out);
-    else R.extract(out);
-
-    if(!L.empty() && in <= *L.rbegin()) L.insert(in);
-    else R.insert(in);
-
-    while(L.size() < (k+1)/2){
-      L.insert(*R.begin());
-      R.extract(*R.begin());
-    }
-    while(L.size() > (k+1)/2){
-      R.insert(*L.rbegin());
-      L.extract(*L.rbegin());
-    }
-
-    //println("L: {}\nR: {}\n", L, R);
-    cout << *L.rbegin() << " ";
-  }
-}
-
-
-
-using namespace __gnu_pbds;
-using multiset_index = tree<ll, null_type, less_equal<ll>, rb_tree_tag, tree_order_statistics_node_update>;
-
-auto pdbs_sol(vl& nums, ll n, ll k)-> void {
-  multiset_index idx{};
-
-  for(ll i=0; i<k; ++i){
-    idx.insert(nums[i]);
-  }
-  cout << *idx.find_by_order((k-1)/2) << " ";
-
-  for(ll i=k; i<n; ++i){
-    ll out = nums[i-k];
-    ll in  = nums[i];
-
-    // we get the order aka pos then use it to aquire an iterator to the elem
-    // to remove
-    auto out_pos = idx.find_by_order(idx.order_of_key(out));
-
-    idx.erase(out_pos);
-    idx.insert(in);
-    cout << *idx.find_by_order((k-1)/2) << " ";
-  }
-}
-
-
 int main(){
   ll n, k;
   cin >> n >> k;
 
+  vl res{}; res.reserve(n);
   vl nums{};
   for(auto _: srv::iota(0, n)){
     ll c; cin>>c;
     nums.push_back(c); 
   }
-  
-//  multiset_sol(nums, n, k);
-  pdbs_sol(nums, n, k);
+
+  vl mem{};
+  for(ll i=0; i<k; ++i){
+    mem.push_back(nums[i]);
+  }
+
+  auto median = [&mem, &k]()->ll{
+    if(k%2 == 0){
+      return min(mem[k/2 - 1], mem[k/2]);
+    }
+      return mem[k/2];
+  };
+
+  auto bs = [&mem](ll val) -> ll {
+    ll i=0;
+    ll j=mem.size();
+    
+    while(i<j){
+      ll m = i+(j-i)/2;
+      if(mem[m]>val){
+        j = m;
+      }else if(mem[m]<val){
+        i = m+1;
+      }else{
+        return m;
+      }
+    }
+    return i;
+  };
+
+  auto rearrange = [&mem, &k, &bs](ll rem, ll inst) -> void {
+    ll rem_pos = bs(rem);
+    mem.erase(next(mem.begin(), rem_pos));
+    //println("removing: {} at: {}", rem, rem_pos);
+
+    ll inst_pos = bs(inst);
+    if(inst_pos >= k){
+      mem.push_back(inst);
+    }else{
+      mem.insert(next(mem.begin(), inst_pos), inst);
+    }
+    //println("inserting: {} at: {}", inst, inst_pos);
+  };
+
+
+  sort(mem.begin(), mem.end());
+  //println("mem: {}", mem);
+  res.push_back(median());
+  for(ll i=k; i<n; ++i){
+    if(nums[i-k] != nums[i])[[likely]]{
+      rearrange(nums[i-k], nums[i]); 
+    }
+    //println("mem: {}", mem);
+    res.push_back(median());
+  }
+
+ print_vec(res);
 }
