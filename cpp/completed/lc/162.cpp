@@ -129,78 +129,51 @@ auto mymax(T& a, T& b, Rest&...args){
 //-----------------------------------------------------------------------------
 
 /**
- *  This one is fun, instead of saving cummalitive data in the segment tree
- *  we use it to store the updated appentions to ranges, when looking up a val
- *  we walk down the tree until we find it then for every segment we hit. We
- *  append the appention on the way up.
+ *  if nums[m] is a peak we return. else its either at an increase or a decrease
+ *  we move towards the top.
+ *
+ *  init checks + 0 and n-1 checks to avoid out-of-bound access since we 
+ *  consider index -1 and n as -inf and valid
  */
 
+class Solution {
+public:
+  int findPeakElement(vector<int>& nums) {
+    int n = nums.size();
+    if(n == 1) return 0;
 
-auto lookup(vl& seg, vl& nums, ll v, ll tl, ll tr, ll pos) -> ll {
-  if(tl == tr){
-    assert(tl == pos);
-    return nums[pos] + seg[v];
-  } 
+    if(nums[0]>nums[1]) return 0;
+    if(nums[n-1]>nums[n-2]) return n-1;
 
-  ll tm = midpoint(tl, tr);
-  ll res; 
-  if(pos <= tm){
-    res = lookup(seg, nums, v+1, tl, tm, pos); 
-  }else{
-    res = lookup(seg, nums, v + 2*(tm-tl+1), tm+1, tr, pos);
+    int l = -1;
+    int r = n;
+
+    while(r-l > 1){
+      int m = midpoint(l, r);
+      if(m==0){
+        l = m; continue;
+      }else if(m==n-1){
+        r = m; continue;
+      }
+
+      if(nums[m]>nums[m-1] && nums[m]>nums[m+1]){
+        return m;
+      }else if(nums[m]>nums[m+1]){
+        r = m;
+      }else{
+        l = m;
+      }
+    }
+
+    unreachable();
   }
-
-  return res + seg[v];
-}
-
-auto U(vl& seg, vl& nums, ll v, ll tl, ll tr, ll l, ll r, ll val) -> void {
-  if(tl == l && tr == r){
-    seg[v]+=val;
-    return;
-  } 
-
-  ll tm = midpoint(tl, tr);
-  if(r<=tm){
-    U(seg, nums, v+1, tl, tm, l, r, val);  
-  }else if(l>tm){
-    U(seg, nums, v+2*(tm-tl+1), tm+1, tr, l, r, val);  
-  }else{
-    U(seg, nums, v+1, tl, tm, l, tm, val);
-    U(seg, nums, v+2*(tm-tl+1), tm+1, tr, tm+1, r, val);  
-  }
-}
-
-auto segment(vl& nums) -> vl{
-  ll n = 2*nums.size() - 1;  
-  vl seg(n, 0);
-  return seg;
-}
+};
 
 
 int main(){
-  ll n, q;
-  vl nums{};
-  cin >> n >> q;
-
-  for(int i=0; i<n; ++i){
-    ll c; cin>>c;
-    nums.push_back(c);
-  }
-
-  vl seg = segment(nums);
-
-  for(int i=0; i<q; ++i){
-    ll t;
-    cin >> t;
-    if(t == 1){
-      ll l, r, val;
-      cin >> l >> r >> val;
-      U(seg, nums, 0, 0, nums.size()-1, l-1, r-1, val);
-    }else{
-      ll k;
-      cin >> k;
-      cout << lookup(seg, nums, 0, 0, nums.size()-1, k-1) << "\n";
-    }
-  }
+  Solution s {};
+  vector<int> nums = {3,4,3,2,1};
+  auto res = s.findPeakElement(nums);
+  println("{}", res);
 }
 

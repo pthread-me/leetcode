@@ -16,6 +16,11 @@ namespace sv = views;
 using ll =  long long;
 
 
+//-----------------------------------------------------------------------------
+// Solution
+//-----------------------------------------------------------------------------
+
+
 auto solve(vector<ll>& nums) -> void{
   if (sr::any_of(nums, [](auto e){return e%2 == 0;}) 
       && sr::any_of(nums, [](auto e){return e%2 != 0;})){

@@ -121,86 +121,66 @@ auto mymax(T& a, T& b, Rest&...args){
   return res;
 }
 
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 // SOLUTIONS BELLOW
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+
 /**
- *  This one is fun, instead of saving cummalitive data in the segment tree
- *  we use it to store the updated appentions to ranges, when looking up a val
- *  we walk down the tree until we find it then for every segment we hit. We
- *  append the appention on the way up.
- */
+ *  given that we can jump left if nums[left] > nums[cur]
+ *  and jump right if nums[right] < nums[cur]
+ *
+ *  Observation:
+ *    We divide the array into connected components where a jump can occur 
+ *    meaning 2 components can be connected.
+ *
+ *    When can a jump not occur ? 
+ *    A) given 2 segements one on the left and the other on the right, if
+ *    the max elem in the left seg < min elem in the right. Then there is
+ *    no way to go from right to left.
+ *
+ *
+ *    With this we keep 2 structs a prefix max array and a suffix min array
+ *    Scanning right to left pref[i] represents the left seg and suffix[i+1]
+ *    is the left.
+ *
+ *    if prefix[i] < suffix[i+1] then we cannot reach the max val at i+1
+ *    so res[i] = prefix[i]
+ *    otherwise we can jump from segment where i is to the segment where i+i is
+ *    so res[i] = res[i+1];
+ *
+ *
+ *    Final observation, the lest element will always be able to reach the max,
+ *    this guarantees the moving right to left gives max vals
+ *    */
 
+class Solution {
+public:
+  vector<int> maxValue(vector<int>& nums) {
+    int n = nums.size();
+    vector<int> pref_max{nums[0]};   
+    vector<int> suff_min(n, 0);
+    suff_min[n-1] = nums.back();
 
-auto lookup(vl& seg, vl& nums, ll v, ll tl, ll tr, ll pos) -> ll {
-  if(tl == tr){
-    assert(tl == pos);
-    return nums[pos] + seg[v];
-  } 
+    vector<int> res(n, 0);
 
-  ll tm = midpoint(tl, tr);
-  ll res; 
-  if(pos <= tm){
-    res = lookup(seg, nums, v+1, tl, tm, pos); 
-  }else{
-    res = lookup(seg, nums, v + 2*(tm-tl+1), tm+1, tr, pos);
+    for(int i=1; i<n; ++i) pref_max.push_back(max(nums[i], pref_max[i-1]));
+    for(int i=n-2; i>=0; --i) suff_min[i] =  min(nums[i], suff_min[i+1]);
+
+    res[n-1] = pref_max[n-1];
+    for(int i=n-2; i>=0; --i){
+      if(pref_max[i] <= suff_min[i+1]) res[i] = pref_max[i];
+      else res[i] = res[i+1];
+    }
+
+    return res;
   }
-
-  return res + seg[v];
-}
-
-auto U(vl& seg, vl& nums, ll v, ll tl, ll tr, ll l, ll r, ll val) -> void {
-  if(tl == l && tr == r){
-    seg[v]+=val;
-    return;
-  } 
-
-  ll tm = midpoint(tl, tr);
-  if(r<=tm){
-    U(seg, nums, v+1, tl, tm, l, r, val);  
-  }else if(l>tm){
-    U(seg, nums, v+2*(tm-tl+1), tm+1, tr, l, r, val);  
-  }else{
-    U(seg, nums, v+1, tl, tm, l, tm, val);
-    U(seg, nums, v+2*(tm-tl+1), tm+1, tr, tm+1, r, val);  
-  }
-}
-
-auto segment(vl& nums) -> vl{
-  ll n = 2*nums.size() - 1;  
-  vl seg(n, 0);
-  return seg;
-}
-
+};
 
 int main(){
-  ll n, q;
-  vl nums{};
-  cin >> n >> q;
-
-  for(int i=0; i<n; ++i){
-    ll c; cin>>c;
-    nums.push_back(c);
-  }
-
-  vl seg = segment(nums);
-
-  for(int i=0; i<q; ++i){
-    ll t;
-    cin >> t;
-    if(t == 1){
-      ll l, r, val;
-      cin >> l >> r >> val;
-      U(seg, nums, 0, 0, nums.size()-1, l-1, r-1, val);
-    }else{
-      ll k;
-      cin >> k;
-      cout << lookup(seg, nums, 0, 0, nums.size()-1, k-1) << "\n";
-    }
-  }
+  Solution S{};
+  vector<int> nums{11,18,11};
+  println("{}", S.maxValue(nums));
 }
-

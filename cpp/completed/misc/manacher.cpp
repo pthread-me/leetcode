@@ -1,12 +1,7 @@
-#include <algorithm>
-#include <iterator>
-#include <print>
-#include <ranges>
-#include <sstream>
-#include <utils.hpp>
 #include <bits/stdc++.h>
 
 
+using namespace std;
 
 class Solution {
 public:

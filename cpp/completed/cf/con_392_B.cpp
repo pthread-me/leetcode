@@ -16,6 +16,11 @@ namespace sr = ranges;
 namespace sv = views;
 using ll =  long long;
 
+
+//-----------------------------------------------------------------------------
+// Solution
+//-----------------------------------------------------------------------------
+
 /*
  *  This is an extension to the tower of hanoi where every move cost a specific 
  *  non negative amount, a 3x3 grid has the costs. 

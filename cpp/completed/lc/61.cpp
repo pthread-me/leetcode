@@ -121,86 +121,98 @@ auto mymax(T& a, T& b, Rest&...args){
   return res;
 }
 
-
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 // SOLUTIONS BELLOW
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-/**
- *  This one is fun, instead of saving cummalitive data in the segment tree
- *  we use it to store the updated appentions to ranges, when looking up a val
- *  we walk down the tree until we find it then for every segment we hit. We
- *  append the appention on the way up.
+
+/*
+ *  We will keep a stack, that tells us the original value at j.
+ *
+ *  k = 3
+ *  List: 1,  2,  3,  4,  5,  6,  7,  8 
+ *  queue: []
+ *
+ *  We begin by filling up the stack by doing a replacement scan from i=0
+ *  to k
+ *
+ *  first loop:
+ *  List: N,  N,  N,  1,  2,  3,  7,  8 
+ *  queue: [4,5,6]
+ *
+ *  second loop: we now use the queue for the value to insert
+ *                    i
+ *  List: N,  N,  N,  1,  2,  3,  4,  8 
+ *  queue: [5,6,7]
+ *
+ *                        i
+ *  List: N,  N,  N,  1,  2,  3,  4,  8 
+ *  queue: [5,6,7]
+ *
+ *  continue until i = len of the List aka null
  */
 
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode() : val(0), next(nullptr) {}
+    ListNode(int x) : val(x), next(nullptr) {}
+    ListNode(int x, ListNode *next) : val(x), next(next) {}
+};
 
-auto lookup(vl& seg, vl& nums, ll v, ll tl, ll tr, ll pos) -> ll {
-  if(tl == tr){
-    assert(tl == pos);
-    return nums[pos] + seg[v];
-  } 
+class Solution {
+public:
+  const int ninf = numeric_limits<int>::min();
 
-  ll tm = midpoint(tl, tr);
-  ll res; 
-  if(pos <= tm){
-    res = lookup(seg, nums, v+1, tl, tm, pos); 
-  }else{
-    res = lookup(seg, nums, v + 2*(tm-tl+1), tm+1, tr, pos);
-  }
+  ListNode* rotateRight(ListNode* head, int k) {
+    if(head == nullptr || head->next == nullptr) return head;
 
-  return res + seg[v];
-}
-
-auto U(vl& seg, vl& nums, ll v, ll tl, ll tr, ll l, ll r, ll val) -> void {
-  if(tl == l && tr == r){
-    seg[v]+=val;
-    return;
-  } 
-
-  ll tm = midpoint(tl, tr);
-  if(r<=tm){
-    U(seg, nums, v+1, tl, tm, l, r, val);  
-  }else if(l>tm){
-    U(seg, nums, v+2*(tm-tl+1), tm+1, tr, l, r, val);  
-  }else{
-    U(seg, nums, v+1, tl, tm, l, tm, val);
-    U(seg, nums, v+2*(tm-tl+1), tm+1, tr, tm+1, r, val);  
-  }
-}
-
-auto segment(vl& nums) -> vl{
-  ll n = 2*nums.size() - 1;  
-  vl seg(n, 0);
-  return seg;
-}
-
-
-int main(){
-  ll n, q;
-  vl nums{};
-  cin >> n >> q;
-
-  for(int i=0; i<n; ++i){
-    ll c; cin>>c;
-    nums.push_back(c);
-  }
-
-  vl seg = segment(nums);
-
-  for(int i=0; i<q; ++i){
-    ll t;
-    cin >> t;
-    if(t == 1){
-      ll l, r, val;
-      cin >> l >> r >> val;
-      U(seg, nums, 0, 0, nums.size()-1, l-1, r-1, val);
-    }else{
-      ll k;
-      cin >> k;
-      cout << lookup(seg, nums, 0, 0, nums.size()-1, k-1) << "\n";
+    auto n_node = head;
+    int n = 0;
+    while(n_node != nullptr){
+      ++n; n_node = n_node->next;
     }
-  }
-}
+    k = k%n;
+    if(k==0) return head;
 
+    auto i = head;
+    auto j = head;
+    for(int p=0; p<k;++p) j=j->next;
+    deque<int> queue{};
+
+    for(int p=0; p<k; ++p){
+      if(i->val > ninf){
+        queue.push_back(j->val);
+      }
+      j->val = i->val;
+      i->val = ninf;
+
+      i=i->next;
+      if(j->next == nullptr){
+        j= head; 
+      }else{
+        j=j->next;
+      }
+    }
+
+    for(int p=k; p<n; ++p){
+      int cur = queue.front();
+      queue.pop_front();
+      if(j->val > ninf){
+        queue.push_back(j->val);
+      }
+      j->val = cur;
+      if(j->next == nullptr){
+        j= head; 
+      }else{
+        j=j->next;
+      }
+    }
+    return head;
+  }
+};
+int main(){
+ 
+}

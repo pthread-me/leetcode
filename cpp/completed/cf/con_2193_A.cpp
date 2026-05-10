@@ -17,6 +17,9 @@ namespace sr = ranges;
 namespace sv = views;
 using ll =  long long;
 
+//-----------------------------------------------------------------------------
+// Solution
+//-----------------------------------------------------------------------------
 
 auto can_sum(vector<ll>& nums, ll t, ll x) -> bool{
   auto diff = t - accumulate(nums.begin(), nums.end(), 0);

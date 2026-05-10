@@ -129,78 +129,107 @@ auto mymax(T& a, T& b, Rest&...args){
 //-----------------------------------------------------------------------------
 
 /**
- *  This one is fun, instead of saving cummalitive data in the segment tree
- *  we use it to store the updated appentions to ranges, when looking up a val
- *  we walk down the tree until we find it then for every segment we hit. We
- *  append the appention on the way up.
+ *  Whats important here is that tl,tr,tm are the ranges in nums. vectors
+ *  are the segments v.
+ *
+ *  When moving between left and right we use the following obs:
+ *    1) for a vector of length n (so n leafs) we need n-1 internal nodes
+ *      to construct a tree on it, so out total is 2n-1 segments/cells in seg.
+ *    2) We use an euler tour tranversal (preorder) so left subtree is at v+1.
+ *      right subtree is after all the child nodes of left, since we initially
+ *      divide the segment at v into [tl, tm] and [tm+1,tr] we have it that
+ *      left has 2*(tm-tl) child nodes + 1 for the left segment itself.
+ *      So right is at index v+2(tm-tl+1)
+ *    3) Update is trivial
+ *    4) for query the only thing to keep in mind is what tl,tm,tr stand for.
+ *      never cofuse them with v (thats what I used to get stuck at). Then we have
+ *      4 cases
+ *        a) the curr segment is exactly [l,r] -> just return
+ *        b,c) [l,r] is fulling in eith left of right subtrees of curr segment
+ *
+ *        d) [l,r] is partially in both:
+ *            The trick here is that once we go to the left segment we want the entire
+ *            value from l to the last element to the right of that seg which is tm.
+ *            same for right segment with tm+1 being the full length to the left of r.
  */
 
 
-auto lookup(vl& seg, vl& nums, ll v, ll tl, ll tr, ll pos) -> ll {
+auto C(vl& seg, vl& nums, ll v, ll tl, ll tr) -> void {
   if(tl == tr){
-    assert(tl == pos);
-    return nums[pos] + seg[v];
-  } 
-
-  ll tm = midpoint(tl, tr);
-  ll res; 
-  if(pos <= tm){
-    res = lookup(seg, nums, v+1, tl, tm, pos); 
-  }else{
-    res = lookup(seg, nums, v + 2*(tm-tl+1), tm+1, tr, pos);
-  }
-
-  return res + seg[v];
-}
-
-auto U(vl& seg, vl& nums, ll v, ll tl, ll tr, ll l, ll r, ll val) -> void {
-  if(tl == l && tr == r){
-    seg[v]+=val;
+    seg[v] = nums[tl];
     return;
   } 
-
-  ll tm = midpoint(tl, tr);
-  if(r<=tm){
-    U(seg, nums, v+1, tl, tm, l, r, val);  
-  }else if(l>tm){
-    U(seg, nums, v+2*(tm-tl+1), tm+1, tr, l, r, val);  
+  ll tm = tl + (tr-tl)/2;
+  C(seg, nums, v+1, tl, tm);
+  C(seg, nums, v+2*(tm-tl+1), tm+1, tr);
+  seg[v] = seg[v+1] + seg[v+2*(tm-tl+1)];
+}
+auto U(vl& seg, ll v, ll tl, ll tr, ll pos, ll val){
+  if(tl == tr){
+    seg[v] = val;
+    return;
+  } 
+  ll tm = tl + (tr-tl)/2;
+  if(pos <= tm){
+    U(seg, v+1, tl, tm, pos, val);
   }else{
-    U(seg, nums, v+1, tl, tm, l, tm, val);
-    U(seg, nums, v+2*(tm-tl+1), tm+1, tr, tm+1, r, val);  
+    U(seg, 2*(tm-tl), tm+1, tr, pos, val);
+  }
+  seg[v] = seg[v+1] + seg[v+2*(tm-tl)];
+}
+
+auto Q(vl& seg, ll v, ll tl, ll tr, ll l, ll r) -> ll {
+  if(tl == l && tr == r){
+    return seg[v];
+  }
+  ll tm = tl + (tr-tl)/2;
+  if(r<=tm){
+    return Q(seg, v+1, tl, tm, l, r);  
+  }else if (l>= tm+1){
+    return Q(seg, v+2*(tm-tl+1), tm+1, tr, l, r);
+  }else{
+    return Q(seg, v+1, tl, tm, l, tm) + Q(seg, v+(2*(tm-tl+1)), tm+1, tr, tm+1, r);
   }
 }
 
-auto segment(vl& nums) -> vl{
-  ll n = 2*nums.size() - 1;  
-  vl seg(n, 0);
+auto construct_tree(vl& nums) -> vl{
+  ll n = nums.size();
+  ll m = (2*n)-1;
+  
+  vl seg(m, 0);
+  C(seg, nums, 0, 0, n-1);
   return seg;
+}
+auto update_tree(vl& seg, vl& nums, ll pos, ll val) -> void{
+  assert(pos<seg.size());
+  U(seg, 0, 0, nums.size()-1, pos, val);
+}
+
+auto sum_query(vl& seg, vl& nums, ll l, ll r){
+  return Q(seg, 0, 0, nums.size()-1, l, r);
 }
 
 
 int main(){
-  ll n, q;
-  vl nums{};
-  cin >> n >> q;
+  vl nums{18,2,9,-9,1,199,6,12,88,561,0};
+  vl seg = construct_tree(nums);
+  println("{}", seg);
 
-  for(int i=0; i<n; ++i){
-    ll c; cin>>c;
-    nums.push_back(c);
-  }
+  update_tree(seg,nums, 0, 0);
+  println("{}", seg);
 
-  vl seg = segment(nums);
-
-  for(int i=0; i<q; ++i){
-    ll t;
-    cin >> t;
-    if(t == 1){
-      ll l, r, val;
-      cin >> l >> r >> val;
-      U(seg, nums, 0, 0, nums.size()-1, l-1, r-1, val);
-    }else{
-      ll k;
-      cin >> k;
-      cout << lookup(seg, nums, 0, 0, nums.size()-1, k-1) << "\n";
-    }
-  }
+  ll l = 3;
+  ll r = 8;
+  println("{} + {} = {}",l, r, sum_query(seg, nums, l, r));
 }
+
+
+
+
+
+
+
+
+
+
 
