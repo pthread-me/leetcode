@@ -2,8 +2,6 @@
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/pb_ds/assoc_container.hpp>
 
-#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
-
 using namespace std;
 
 using ll =  long long;
@@ -19,9 +17,7 @@ namespace sr = ranges;
 namespace sv = views;
 
 using namespace __gnu_pbds;
-
-template<typename T>
-using multiset_index = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+using multiset_index = tree<ll, null_type, less_equal<ll>, rb_tree_tag, tree_order_statistics_node_update>;
 
 
 static const ll INF = numeric_limits<ll>::max() - 100'000; // offset possible addition issues
@@ -132,7 +128,40 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+/**
+ *  We use a 2d prefix sum where pref[i][j] stores the number of * from 0,0
+ *  to i,j inclusive. then to get an arbitrary rectangle at pos x,y we need 
+ *  to get the pref[y][x] and subtract from it 2 rectangle (to the left and above)
+ *  the left is easyily acuired from the prefixsum, the top needs to avoid double
+ *  counting, this can be done either by subtracting or adding what would've been 
+ *  double deleted. I go with the prior approach.
+ *
+ *  Can be solved using 2d segment trees (i think) but would be q*log^2(n) so prob fails
+ *  on time. as opposed to O(q) for this question, plus the O(n) dp construction
+ *
+ */
+
 int main() {
-  fast_io;
+  ll n, q;
+  char c;
+  ll y1, x1, y2, x2;
+
+  cin >> n >> q;
+
+  vector<vector<ll>> pref(n+1, vector<ll>(n+1, 0));
+
+  for(ll i=1; i<=n; ++i){
+    for(ll j=1; j<=n; ++j){
+      cin >> c;
+      pref[i][j] = pref[i][j-1] + (pref[i-1][j] - pref[i-1][j-1]);
+      if(c != '.') ++pref[i][j];
+    }
+  }
+
+  for(ll i=0; i<q; ++i){
+    cin >> y1 >> x1 >> y2 >> x2;
+    ll res = pref[y2][x2] - pref[y2][x1-1] - (pref[y1-1][x2]-pref[y1-1][x1-1]);
+    cout << res << "\n";
+  }
 
 }

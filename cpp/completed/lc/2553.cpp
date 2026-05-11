@@ -2,8 +2,6 @@
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/pb_ds/assoc_container.hpp>
 
-#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
-
 using namespace std;
 
 using ll =  long long;
@@ -21,7 +19,7 @@ namespace sv = views;
 using namespace __gnu_pbds;
 
 template<typename T>
-using multiset_index = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+using multiset_index = tree<T, null_type, less_equal<T>, rb_tree_tag, tree_order_statistics_node_update>;
 
 
 static const ll INF = numeric_limits<ll>::max() - 100'000; // offset possible addition issues
@@ -132,7 +130,32 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-int main() {
-  fast_io;
+class Solution {
+public:
+  vector<int> separateDigits(vector<int>& nums) {
+    vector<int> res{}; res.reserve(60000);     
+    vector<int> stack{}; stack.reserve(6);
+    
+    for(auto e: nums){
+      for(int i=1; i<=100000; i*=10){
+        int val = (e%(i*10))/i;
+        stack.push_back(val);
+      }
+      while(!stack.empty() && stack.back() == 0) stack.pop_back();
+      while(!stack.empty()){
+        res.push_back(stack.back());
+        stack.pop_back();
+      }
+    }
+    return res;
+  }
+};
 
+
+int main() {
+  Solution s{};
+  vector<int> nums{13, 25, 83, 3};
+  auto res= s.separateDigits(nums);
+  
+  println("{}", res);
 }

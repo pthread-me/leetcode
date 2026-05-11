@@ -132,6 +132,68 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+
+/**
+ *  PBDS my beloved
+ *  classic successor predecessor, get their order then subtract
+ *
+ *  We can also solve this using an "offline" segment ttree: https://cses.fi/problemset/model/1144/
+ *
+ */
+
+auto pbds_solution() -> void{
+  multiset_index<pair<ll,ll>> stat{};
+  vl nums{};
+
+  ll n, q;
+  cin >> n >> q;
+
+  for(ll i=0; i<n; ++i){
+    ll val;
+    cin >> val;
+    nums.push_back(val);
+    stat.insert(pair(val, i));
+  }
+
+//  println("statistic: {}", stat);
+  for(ll i=0; i<q; ++i){
+    char t; cin >> t;
+    if(t == '?'){
+      ll l, r; cin >> l >> r;
+
+      // pred is not actually a pred, its the first valid elemnt in the range
+      auto pred = stat.upper_bound({l-1, INF});
+      auto succ = stat.upper_bound({r, INF});
+      ll pred_order = stat.order_of_key(*pred);
+      if(pred->first < l && pred != stat.begin()){
+        ++pred_order;
+      }
+      // placing the successor at the actual successor or having it be the upper bound
+      // of the seq size
+      ll succ_order;
+      if(succ == stat.end()){
+        succ_order = stat.size();
+      }else{
+        succ_order = stat.order_of_key(*succ);
+      }
+     cout << (succ_order - pred_order) << "\n";
+    }else{
+      ll i, x;
+      cin >> i >> x;
+      --i;
+      ll old_x = nums[i];
+      stat.erase({old_x, i});
+      stat.insert({x, i});
+      nums[i] = x;
+    }
+  }
+}
+
+
+auto offline_segment_tree() -> void{
+ 
+}
+
 int main() {
   fast_io;
 

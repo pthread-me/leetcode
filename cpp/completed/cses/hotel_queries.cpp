@@ -2,8 +2,6 @@
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/pb_ds/assoc_container.hpp>
 
-#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
-
 using namespace std;
 
 using ll =  long long;
@@ -19,9 +17,7 @@ namespace sr = ranges;
 namespace sv = views;
 
 using namespace __gnu_pbds;
-
-template<typename T>
-using multiset_index = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+using multiset_index = tree<ll, null_type, less_equal<ll>, rb_tree_tag, tree_order_statistics_node_update>;
 
 
 static const ll INF = numeric_limits<ll>::max() - 100'000; // offset possible addition issues
@@ -132,7 +128,69 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+
+/**
+ *  A qlogn solution using segment trees, Im only searching for cells so np intervals
+ *  and am biasing left branches. basic update and build, only diff is update
+ *  prints the position of the cell that fits the predicate val<=nums[cell].
+ *  Once it finds the cell it decrements the val and propagates changes upwards.
+ */
+
+auto B(vl& seg, vl& nums, ll v, ll tl, ll tr) -> void {
+  if(tl == tr) {
+    seg[v] = nums[tl];
+    return;
+  }
+  ll tm = midpoint(tl, tr);
+  B(seg, nums, v+1, tl, tm);
+  B(seg, nums, v+2*(tm-tl+1), tm+1, tr);
+
+  seg[v] = max(seg[v+1], seg[v+2*(tm-tl+1)]);
+}
+
+auto segement(vl& nums) -> vl{
+  vl seg(2*nums.size()-1,0);
+  B(seg, nums, 0, 0, nums.size()-1);
+  return seg;
+};
+
+
+auto LU(vl& seg, ll v, ll tl, ll tr, ll val) -> void {
+  if(tl == tr){
+    assert(seg[v]>=val);
+    cout << (tl + 1) << " ";
+    seg[v]-=val;
+    return;
+  }
+
+  ll tm = midpoint(tl, tr);
+  if(seg[v+1] >= val){
+    LU(seg, v+1, tl, tm, val); 
+  }else{
+    LU(seg, v+2*(tm-tl+1), tm+1, tr, val); 
+  }
+  seg[v] = max(seg[v+1], seg[v+2*(tm-tl+1)]);
+}
+
 int main() {
-  fast_io;
+  ll n, q;
+  cin >> n >> q;
+  vl nums{};
+
+  for(ll i=0; i<n; ++i){
+    ll cur; cin >> cur;
+    nums.push_back(cur);
+  }
+
+  vl seg = segement(nums);
+     
+  for(ll i=0; i<q; ++i){
+    ll query; cin >> query;
+    if(seg[0]<query){
+      cout << "0 ";
+    }else{
+      LU(seg, 0, 0, nums.size()-1, query);
+    }
+  }
 
 }
