@@ -118,11 +118,6 @@ auto mygcd(T a, T b) -> T{
   return r;
 }
 
-template<number T>
-auto mylcm(T a, T b) -> T{
-  return (a*b) / gcd(a, b);
-}
-
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -130,35 +125,98 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-class Solution {
-public:
-  using ll = long long;
-  int search(vector<int>& nums, int t) {
-    if(nums.size() == 1) return nums[0] == t ? 0 : -1;
 
-    ll l = 0;
-    ll r = nums.size()-1;
+const ll p = 1'000'000'007;
+const ll two_inverse = fast_pow(2ll, p-2, p);
 
-    while(r-l > 1){
-      ll m = midpoint(l, r);
-      ll tl, tr;
-      if(nums[m+1]<=nums[r]) tl = m+1, tr = r;
-      else tl = l, tr = m-1;
-      
-      if(nums[tl] <= t && t <= nums[tr]) l = tl, r = tr;
-      else if(tl < m) l = m;
-      else r = m;
-    }
-
-    if(nums[l] == t) return l;
-    if(nums[r] == t) return r;
-    return -1;
+auto count(vector<pair<ll,ll>>& primes) -> ll {
+  ll res = 1;
+  for(auto& [x, e]: primes){
+    res *= (e+1) % p;
   }
-};
+  return res;
+}
 
+/*
+ *  given p1^e1 and p2^e2 obsevre that the total sum is:
+ *    Sum_(i=0 to e1) Sum_(j=0 to e2) of p1^i * p2^j
+ *
+ *    aka 2 nested independant sums so we can instead do:
+ *    (Sum_(i=0 to e1) p1^i) * (Sum_(j=0 to e2) p2^j)
+ *
+ *   Then scalling for pn and en is easy
+ *
+ *   We use the trick for modul div: a/b % p = a*b^(p-2) % p 
+ *   inv of b is b^(p-1) so b^(p-2)*b = b^(p-1) = 1%p
+ */
+auto sum(vector<pair<ll,ll>>& primes) -> ll {
+  ll res = 1; 
+  for(auto& [x, e]: primes) {
+    ll numerator = ((fast_pow(x, e+1, p)-1)%p);
+    ll denominator = (fast_pow((x-1),p-2, p)%p);
+    
+    ll temp = ((numerator%p) * (denominator%p)) % p;
+    res = (res * temp) % p;
+  }
+  return res;
+}
+
+
+/**
+ *  explaination here: https://usaco.guide/problems/cses-2182-divisor-analysis/solution
+ *
+ *  think of a table that we keep increasing by dimension
+ *
+ *  it starts of as the prod of x1^0 * x1^1 * ... x1^e1
+ *  then turns into a table:
+ *  (x1^0 * x2^0) * (x1^1 * x2^0) ... (x1^e1 * x2^0)
+ *  *
+ *  (x1^0 * x2^1) * (x1^1 * x2^1) ... (x1^e1 * x2^1)
+ *  *
+ *  (x1^0 * x2^2) * (x1^1 * x2^2) ... (x1^e1 * x2^2)
+ *  ...
+ *  (x1^0 * x2^e2) * (x1^1 * x2^e2) ... (x1^e1 * x2^e2)
+ *
+ *
+ *  Then it becomes 3d -> 4d ....
+ *
+ *
+ */
+auto prod(vector<pair<ll,ll>>& primes) -> ll{
+    auto sum_of_series = [](ll e) -> ll {
+    return ( (((e+1)%p * (e%p)) %p) * (two_inverse)) % p;
+  };
+
+  ll prev_prod = fast_pow(primes[0].first, primes[0].second, p);
+  ll prev_count = primes[0].second + 1;
+
+  for(auto& [x, e]: srv::drop(primes, 1)) {
+
+    ll x_col_contrb = fast_pow(x, sum_of_series(e), p);
+    ll x_total_contrib = fast_pow(x_col_contrb, prev_count, p);
+
+    prev_prod = (fast_pow(prev_prod, e+1, p) * x_total_contrib) % p;
+    prev_count = prev_count * (e+1) % (p-1);
+  }
+
+
+  return  prev_prod;
+}
 
 int main() {
-  Solution s{};
-  vector<int> nums{4,5,6,7,0,1,2};
-  cout << s.search(nums, 0);
+  ll n;
+  cin >> n;
+
+  vector<pair<ll,ll>> primes{}; primes.reserve(n);
+
+  for(ll i=0; i<n; ++i){
+    ll x, e; cin >> x >> e;
+    primes.push_back({x, e});
+  }
+
+  cout << count(primes) << ' ' <<  sum(primes) << ' '  << prod(primes);
+
+  
+
+ 
 }

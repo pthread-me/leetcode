@@ -133,61 +133,82 @@ auto mymax(T& a, T& b, Rest&...args){
 //-----------------------------------------------------------------------------
 
 
-/**
- *  A simple dfs solution, grab an arbirtrary node and traverse that connected
- *  component, if we find a cycle, return true without unwrapping the curr path
- *  thus the path shows the cycle, if no cycle is found the path is unwrapped and
- *  dfs continues.
- */
-
-auto dfs(vector<vl>& adj, vector<bool>& vis, ll u, ll p, vl& path) -> bool {
-  path.push_back(u);
-  vis[u] = true;
-
-  for(auto v: adj[u]){
-    if(v == p) continue;
-    if(vis[v]){
-      path.push_back(v);
-      return true;
-    }
-    bool res = dfs(adj, vis, v, u, path);
-    if(res) return res;
-  }
-  path.pop_back();
-  return false;
+const vector<tuple<ll,ll,ll>> dir{{0,-1,'L'},{0,1,'R'}, {-1,0,'U'}, {1,0,'D'}};
+auto valid_move(ll y, ll x, ll n, ll m) -> bool {
+  return y>=0 && y<n && x>=0 && x<m; 
 }
 
 
-
 int main() {
-  ll n, m;
-  cin >> n >>m;
+  fast_io;
 
-  vector<vl> adj(n+1, vl{});
-  vector<bool> visisted(n+1, false);
+  ll n,m;
+  char cur;
+  cin >> n >> m;
 
-  for(ll i=0; i<m; i++){
-    ll u,v;
-    cin >> u >> v;
-    adj[u].push_back(v);
-    adj[v].push_back(u);
-  }
-
-  vl path{};
-  for(ll u=1; u<=n && path.size() == 0; ++u){
-    if(!visisted[u])
-      dfs(adj, visisted, u, 0, path);
-  }
+  pair<ll,ll> player;
+  deque<pair<ll,ll>> q{};
+  vector<vector<char>> parent(n, vector<char>(m, '\0'));
+  vector<vector<char>> grid(n, vector<char>(m, '\0'));
   
-  if(path.size()>0){
-    ll i = 0;
-    for(; (ull)i<=path.size() && path[i]!=path.back(); ++i);
-    cout << (path.size()-i) << "\n";
-    for(; (ull)i<path.size(); ++i){
-      cout << path[i] << " " ;
-   }
+  for(ll i=0; i<n; ++i){
+    for(ll j=0; j<m; ++j){
+      cin >> cur;
+      grid[i][j] = cur;
+      if(cur=='M')q.push_back({i,j});
+      if(cur=='A') player = {i,j};
+    }
+  }
+
+  q.push_back({player.first, player.second});
+
+  pair<ll,ll> res{-1,-1};
+  while(!q.empty()){
+    ll y,x;
+    tie(y,x) = q.front(); q.pop_front();
+    for(auto [dy, dx, d]: dir){
+      if(valid_move(y+dy, x+dx, n, m) && grid[y+dy][x+dx] == '.'){
+        grid[y+dy][x+dx] = grid[y][x];
+        q.push_back({y+dy, x+dx});
+
+        if(grid[y][x] == 'A'){
+          parent[y+dy][x+dx] = d;
+        }
+      }
+    }
+
+    if(grid[y][x] == 'A' && (y==0 || y==n-1 || x==0 || x==m-1)){
+      res = {y, x};    
+      break;
+    }
+  }
+
+  if(res.first == -1){
+    cout << "NO\n";
   }else{
-    cout << "IMPOSSIBLE";
+    ll y,x;
+    tie(y,x) = res;
+    vector<char> path;
+
+    while(y!=player.first || x!=player.second){
+      path.push_back(parent[y][x]);
+      tuple<ll,ll,ll> path_dir;
+      ll dy,dx, ignore;
+      if(parent[y][x] == 'D') path_dir = dir[3];
+      else if(parent[y][x] == 'U') path_dir = dir[2];
+      else if(parent[y][x] == 'R') path_dir = dir[1];
+      else if(parent[y][x] == 'L') path_dir = dir[0];
+      else exit(1);
+
+      tie(dy,dx, ignore) = path_dir;
+      y-=dy;
+      x-=dx;
+    }
+
+    reverse(path.begin(), path.end());
+    cout << "YES\n";
+    cout << path.size() << "\n";
+    cout << string(path.begin(), path.end());
   }
-  
+ 
 }

@@ -41,61 +41,12 @@ inline auto trim(string_view s) -> string_view{
   return ltrim(rtrim(s));
 }
 
-
 template<typename T>
 concept number = is_integral_v<T>;
 template<typename T>
 concept printable =  requires (ostream& os, T const& t) {
   {os << t} -> same_as<ostream&>;
 };
-
-template<typename T>
-auto read_line() -> vs {
-  string line;
-  getline(cin, line);
-  
-  vs res{};
-  auto x = trim(line) | srv::split(' ') 
-    | srv::transform([](auto&& sub) -> string{
-      return std::string(sub.begin(), sub.end());
-      });
-  
-  sr::for_each(x.begin(), x.end(), [&res](string s){res.push_back(s);}); 
-
-  return res;
-}
-
-template<number T>
-auto read_line() -> vector<T> {
-  string line;
-  getline(cin, line);
-
-  vector<T> res{};
-  auto x = trim(line) | srv::split(' ') 
-    | srv::transform([](auto&& sub) -> T{
-        auto b = &*sub.begin();
-        auto e = &*sub.end();
-        T i{};
-
-        auto [ptr, err] = from_chars(b, e, i);
-        if(err == errc::result_out_of_range || err == errc::invalid_argument){
-          cerr << "Error in line to vector<{}> read " <<  typeid(T).name() << "\n";
-          exit(1);
-        }
-        return i;
-      });
-
-  sr::for_each(x.begin(), x.end(), [&res](auto&& a){res.push_back(a);}); 
-  return res;
-}
-
-template<printable T>
-auto print_vec(vector<T>& v) -> void{
-  for(auto& e: v){
-    cout << e << " ";
-  }
-  cout <<"\n";
-}
 
 template<number T>
 constexpr auto mypow(T a, T b) -> T {
@@ -105,6 +56,20 @@ constexpr auto mypow(T a, T b) -> T {
   }
   return res;
 }
+
+template<number T>
+constexpr auto fast_pow(T b, T p) -> T {
+  T res = 1;
+  while(p>0){
+    if(p&1){
+      res *= b;
+    }
+    b *= b;
+    p >>= 1;
+  }
+  return res;
+}
+
 
 template<number T, typename ...Rest>
 auto mymin(T a, T b, Rest...args){
@@ -132,39 +97,56 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-/*
- * Monotonicly increasing deque (left to right increases).
- * popback while back() > e.
- * popfront if it leaves the window
- * min is front()
+
+/**
+ *  Observe that for k < n/2 the kth deletion is in n, so we can just return it.
+ *  otherwise, we recurse after deleting all possible elements:
+ *    here we notice that at each round we delete even numbers, this gives us
+ *    2 cases when n is even or odd.
+ *
+ *   Case 1: n is even
+ *    - we can delete n/2 elements, leaving us with k-n/2 positions
+ *    - for example n=6 k=5 we start with:
+ *      round 1: 1 2 3 4 5 6 -> 1 _ 3 _ 5 _
+ *      round 2: 1 2 3 -> 1 _ 3
+ *      round 3: 1 2 -> 1 _
+ *
+ *      at each round > 1, the pos x maps to 2*x -1, so we can recurse until a 
+ *      base case then map postions as we move up the call stack.
+ *
+ *   Case 2: n is odd:
+ *    - This case is very similar except now, the mapping is shifted by one position
+ *    - for example n=7 k=5 we start with:
+ *      round 1: 1 2 3 4 5 6 7 -> 1 _ 3 _ 5 _ 7
+ *      round 2: 1 2 3 4 -> 1 _ 3 _
+ *
+ *      observe that in round 2, case 2 postion 2 maps to 1 instead of 3.
+ *
+ *    Final note:
+ *      - we do n+1/2 to find the number of elems remaining, and n/2 for the valid
+ *      numbers removed at each round
+ *
  */
 
+
+auto T(ll n, ll k) -> ll {
+  if(n==1)    return 1;
+  if(k<= n/2) return 2*k;
+
+  ll pos = T((n+1)/2, k-n/2);
+  if(n%2 == 1){
+    if(pos == 1)  return n;
+    else          return 2*(pos-1) -1;
+  }
+  return 2*pos - 1;
+}
+
 int main() {
-  fast_io;
-
-  ll n,k,x,a,b,c;
-  ll res = 0;
-  cin >> n >> k >> x >> a >> b >> c;
-  auto gen = [&](){
-    x = (a*x+b) % c;
-  };
-  
-  deque<pair<ll,ll>> q{{x, 0}};
-
-  for(ll i=1; i<k; ++i){
-    gen();
-    while(!q.empty() && x<q.back().first) q.pop_back();
-    q.push_back({x, i});
+  ll t;
+  cin >> t;
+  for(ll i=0; i<t; ++i){
+    ll n,k;
+    cin >> n >> k;
+    cout << T(n, k) << "\n";
   }
-
-  for(ll i=k; i<=n; ++i){
-    res ^= q.front().first;
-
-    while(!q.empty() && q.front().second<=(i-k)) q.pop_front();
-    gen();
-    while(!q.empty() && x<q.back().first) q.pop_back();
-    q.push_back({x, i});
-  }
-
-  cout << res;
 }

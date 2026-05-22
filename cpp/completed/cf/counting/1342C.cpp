@@ -130,35 +130,63 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-class Solution {
-public:
-  using ll = long long;
-  int search(vector<int>& nums, int t) {
-    if(nums.size() == 1) return nums[0] == t ? 0 : -1;
-
-    ll l = 0;
-    ll r = nums.size()-1;
-
-    while(r-l > 1){
-      ll m = midpoint(l, r);
-      ll tl, tr;
-      if(nums[m+1]<=nums[r]) tl = m+1, tr = r;
-      else tl = l, tr = m-1;
-      
-      if(nums[tl] <= t && t <= nums[tr]) l = tl, r = tr;
-      else if(tl < m) l = m;
-      else r = m;
-    }
-
-    if(nums[l] == t) return l;
-    if(nums[r] == t) return r;
-    return -1;
-  }
-};
+/*
+ *  The question is a bit hard so my explaination might not be the best:
+ *  
+ *  Question given a range [l,r] and two numbers a,b find the number of elemns
+ *  x in the range such that: (x%a)%b != (x%b)%a
+ *
+ *  Observations:
+ *    1) if a<b then (x%a)%b = x%a -> so we swap if needed
+ *    2) x can be writter as qb+r so:
+ *      LHS goes from x%a to (bq+r)%a
+ *      RHS goes from (x%b)%a to (bq+r % b)%a = r%a
+ *
+ *    3) now observe that we have r%a and bq+r%a, we ask the question:
+ *      When are these 2 equations equal?
+ *      A) when bq%a = 0 aka when q % LCM(a,b) = 0
+ *
+ *    4) The domain of the question turns from the integers to integeres modulo LCM(a,b)
+ *      This is because we now consider the values that q%LCM(a,b) might take. which
+ *      forms a "period" that repeats every LCM(a,b) elems
+ *
+ *      We then solve for [0, LCM(a,b)] the equation (x%a)%b != (x%b)%a.
+ *      then answer the question, how many valid entries are in [0,r] - [0,l-1]
+ *
+ *      We note that since the period repeats, we can find the # of period in the range,
+ *      then add that to the number in the last period
+ *
+ *
+ *  NOTE:
+ *    There is a patterns for the period vector, which you should look into, the first b-1 elems are 
+ *    always 0
+ */
+auto f(vl& period, ll x, ll lcm) -> ll {
+  if(x<0) return 0;
+  return period.back() * (x/lcm) + period[x%lcm];
+}
 
 
 int main() {
-  Solution s{};
-  vector<int> nums{4,5,6,7,0,1,2};
-  cout << s.search(nums, 0);
+  ll t; cin >> t;
+
+  for(ll i{0}; i<t; ++i){
+    ll a, b, q, lcm, ans{0};
+    cin >> a >> b >> q; 
+    lcm = mylcm(a, b);
+
+    if(a>b) swap(a,b);
+
+    vl period(lcm, 0);
+    for(ll j{1}; j<lcm; ++j){
+      period[j] = period[j-1] + ( (j%a) != ((j%b)%a) );
+    }
+
+    for(ll j{0}; j<q; ++j){
+      ll l, r; cin >> l >> r;
+      ans = f(period, r, lcm) - f(period, l-1, lcm); 
+      cout << ans << ' ';
+    }
+    cout << '\n';
+  }
 }

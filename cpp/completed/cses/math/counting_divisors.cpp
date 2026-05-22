@@ -2,7 +2,7 @@
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/pb_ds/assoc_container.hpp>
 
-#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
+#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL);
 
 using namespace std;
 
@@ -41,61 +41,12 @@ inline auto trim(string_view s) -> string_view{
   return ltrim(rtrim(s));
 }
 
-
 template<typename T>
 concept number = is_integral_v<T>;
 template<typename T>
 concept printable =  requires (ostream& os, T const& t) {
   {os << t} -> same_as<ostream&>;
 };
-
-template<typename T>
-auto read_line() -> vs {
-  string line;
-  getline(cin, line);
-  
-  vs res{};
-  auto x = trim(line) | srv::split(' ') 
-    | srv::transform([](auto&& sub) -> string{
-      return std::string(sub.begin(), sub.end());
-      });
-  
-  sr::for_each(x.begin(), x.end(), [&res](string s){res.push_back(s);}); 
-
-  return res;
-}
-
-template<number T>
-auto read_line() -> vector<T> {
-  string line;
-  getline(cin, line);
-
-  vector<T> res{};
-  auto x = trim(line) | srv::split(' ') 
-    | srv::transform([](auto&& sub) -> T{
-        auto b = &*sub.begin();
-        auto e = &*sub.end();
-        T i{};
-
-        auto [ptr, err] = from_chars(b, e, i);
-        if(err == errc::result_out_of_range || err == errc::invalid_argument){
-          cerr << "Error in line to vector<{}> read " <<  typeid(T).name() << "\n";
-          exit(1);
-        }
-        return i;
-      });
-
-  sr::for_each(x.begin(), x.end(), [&res](auto&& a){res.push_back(a);}); 
-  return res;
-}
-
-template<printable T>
-auto print_vec(vector<T>& v) -> void{
-  for(auto& e: v){
-    cout << e << " ";
-  }
-  cout <<"\n";
-}
 
 template<number T>
 constexpr auto mypow(T a, T b) -> T {
@@ -105,6 +56,32 @@ constexpr auto mypow(T a, T b) -> T {
   }
   return res;
 }
+
+template<number T>
+constexpr auto fast_pow(T b, T p) -> T {
+  T res = 1;
+  while(p>0){
+    if(p&1){
+      res *= b;
+    }
+    b *= b;
+    p >>= 1;
+  }
+  return res;
+}
+
+
+template<number T>
+constexpr auto fast_pow(T b, T p, T m) -> T {
+  T res = 1;
+  while(p){
+    if(p&1) res = (res * b) % m;
+    b = (b*b) % m;
+    p >>= 1;
+  }
+  return res;
+}
+
 
 template<number T, typename ...Rest>
 auto mymin(T a, T b, Rest...args){
@@ -132,39 +109,65 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-/*
- * Monotonicly increasing deque (left to right increases).
- * popback while back() > e.
- * popfront if it leaves the window
- * min is front()
- */
 
+// Naive
+auto T_dumb(ull n) -> ull {
+  ull res = 0;
+  ull i=1;
+  for(; i*i<n; ++i){
+    if((n%i)==0)res+=2;
+  } 
+  return i*i==n ? res +1 : res;
+}
+
+/**
+ *  Here we aim to find all the prime factors and the number each contributes e_i.
+ *  so starting from res = 1 which is the number 1, since 1 | n
+ *
+ *  at i = 2 is n is even then 2 contrubutes to n as many times as n/2 is even,
+ *  which is what the inner loop calculates. By modifying n, we avoid double counting 
+ *  at say i=4, since i=2 handled all those cases and stops once n is odd.
+ *
+ *  we continue to do this to find all prime factors pi and their freq ei.
+ *
+ *  given 2 primes p1 and p2 with e1 and e2, we can form e1*e2 subsets aka (p1,p2,p1,p1...)
+ *  all of which will divide n. But since we also need to acount for 1:
+ *    aka p1*p2 | n and 1*p1*p2 | n. so we have (e1+1)*(e2+1).
+ *
+ *  This scales to any number of prime factors
+ *
+ */
+auto T(ull n) -> ull {
+  ull res = 1;
+  for(ull i=2; i*i <= n; ++i){
+    if(n%i == 0){
+      ull ei = 1;
+      n /= i;
+      while(n%i == 0){
+        ++ei;
+        n /= i;
+      }
+
+      res *= (ei+1);
+    }
+  }
+
+  // if n>1 then we still have a prime factor that contributes once so it has the
+  // seq 1,p_i -> e_i = 1 so res *= 2
+  if(n>1){
+    res *= 2;
+  }
+  return res;
+}
+
+const ull mod = 1'000'000'007;
 int main() {
   fast_io;
-
-  ll n,k,x,a,b,c;
-  ll res = 0;
-  cin >> n >> k >> x >> a >> b >> c;
-  auto gen = [&](){
-    x = (a*x+b) % c;
-  };
-  
-  deque<pair<ll,ll>> q{{x, 0}};
-
-  for(ll i=1; i<k; ++i){
-    gen();
-    while(!q.empty() && x<q.back().first) q.pop_back();
-    q.push_back({x, i});
+  ull t;
+  cin >> t;
+  for (ull i=0; i<t; ++i){
+    ull n; 
+    cin >> n;
+    cout << T(n) << ' ';
   }
-
-  for(ll i=k; i<=n; ++i){
-    res ^= q.front().first;
-
-    while(!q.empty() && q.front().second<=(i-k)) q.pop_front();
-    gen();
-    while(!q.empty() && x<q.back().first) q.pop_back();
-    q.push_back({x, i});
-  }
-
-  cout << res;
 }

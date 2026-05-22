@@ -133,61 +133,37 @@ auto mymax(T& a, T& b, Rest&...args){
 //-----------------------------------------------------------------------------
 
 
-/**
- *  A simple dfs solution, grab an arbirtrary node and traverse that connected
- *  component, if we find a cycle, return true without unwrapping the curr path
- *  thus the path shows the cycle, if no cycle is found the path is unwrapped and
- *  dfs continues.
- */
+class Solution {
+public:
 
-auto dfs(vector<vl>& adj, vector<bool>& vis, ll u, ll p, vl& path) -> bool {
-  path.push_back(u);
-  vis[u] = true;
+  int minimumEffort(vector<vector<int>>& tasks) {
+    if(tasks.size() == 1) return tasks[0][1];
+    sort(tasks.begin(), tasks.end(), [](vector<int>& a, vector<int>& b)->bool{
+        return a[1]-a[0] > b[1]-b[0];
+    });      
+    
+    int initial = tasks[0][1];
+    int balance = initial;
 
-  for(auto v: adj[u]){
-    if(v == p) continue;
-    if(vis[v]){
-      path.push_back(v);
-      return true;
+    for(auto e: tasks){
+      if(balance < e[1]){
+        initial += (e[1]-balance);
+        balance = e[1];
+      }
+      balance -= e[0];
     }
-    bool res = dfs(adj, vis, v, u, path);
-    if(res) return res;
+
+    return initial;
   }
-  path.pop_back();
-  return false;
-}
+};
 
 
 
 int main() {
-  ll n, m;
-  cin >> n >>m;
 
-  vector<vl> adj(n+1, vl{});
-  vector<bool> visisted(n+1, false);
+  Solution s{};
+  vector<vector<int>> tasks{{1,2},{2,4},{4,8}};
+  auto res = s.minimumEffort(tasks);
 
-  for(ll i=0; i<m; i++){
-    ll u,v;
-    cin >> u >> v;
-    adj[u].push_back(v);
-    adj[v].push_back(u);
-  }
-
-  vl path{};
-  for(ll u=1; u<=n && path.size() == 0; ++u){
-    if(!visisted[u])
-      dfs(adj, visisted, u, 0, path);
-  }
-  
-  if(path.size()>0){
-    ll i = 0;
-    for(; (ull)i<=path.size() && path[i]!=path.back(); ++i);
-    cout << (path.size()-i) << "\n";
-    for(; (ull)i<path.size(); ++i){
-      cout << path[i] << " " ;
-   }
-  }else{
-    cout << "IMPOSSIBLE";
-  }
-  
+  println("{}", res);
 }

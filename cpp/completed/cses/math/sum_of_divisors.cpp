@@ -2,7 +2,7 @@
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/pb_ds/assoc_container.hpp>
 
-#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
+#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL);
 
 using namespace std;
 
@@ -41,61 +41,12 @@ inline auto trim(string_view s) -> string_view{
   return ltrim(rtrim(s));
 }
 
-
 template<typename T>
 concept number = is_integral_v<T>;
 template<typename T>
 concept printable =  requires (ostream& os, T const& t) {
   {os << t} -> same_as<ostream&>;
 };
-
-template<typename T>
-auto read_line() -> vs {
-  string line;
-  getline(cin, line);
-  
-  vs res{};
-  auto x = trim(line) | srv::split(' ') 
-    | srv::transform([](auto&& sub) -> string{
-      return std::string(sub.begin(), sub.end());
-      });
-  
-  sr::for_each(x.begin(), x.end(), [&res](string s){res.push_back(s);}); 
-
-  return res;
-}
-
-template<number T>
-auto read_line() -> vector<T> {
-  string line;
-  getline(cin, line);
-
-  vector<T> res{};
-  auto x = trim(line) | srv::split(' ') 
-    | srv::transform([](auto&& sub) -> T{
-        auto b = &*sub.begin();
-        auto e = &*sub.end();
-        T i{};
-
-        auto [ptr, err] = from_chars(b, e, i);
-        if(err == errc::result_out_of_range || err == errc::invalid_argument){
-          cerr << "Error in line to vector<{}> read " <<  typeid(T).name() << "\n";
-          exit(1);
-        }
-        return i;
-      });
-
-  sr::for_each(x.begin(), x.end(), [&res](auto&& a){res.push_back(a);}); 
-  return res;
-}
-
-template<printable T>
-auto print_vec(vector<T>& v) -> void{
-  for(auto& e: v){
-    cout << e << " ";
-  }
-  cout <<"\n";
-}
 
 template<number T>
 constexpr auto mypow(T a, T b) -> T {
@@ -105,6 +56,32 @@ constexpr auto mypow(T a, T b) -> T {
   }
   return res;
 }
+
+template<number T>
+constexpr auto fast_pow(T b, T p) -> T {
+  T res = 1;
+  while(p>0){
+    if(p&1){
+      res *= b;
+    }
+    b *= b;
+    p >>= 1;
+  }
+  return res;
+}
+
+
+template<number T>
+constexpr auto fast_pow(T b, T p, T const m) -> T {
+  T res = 1;
+  while(p){
+    if(p&1) res = ((res%m) * (b%m)) % m;
+    b = ((b%m)*(b%m)) % m;
+    p >>= 1;
+  }
+  return res;
+}
+
 
 template<number T, typename ...Rest>
 auto mymin(T a, T b, Rest...args){
@@ -125,6 +102,22 @@ auto mymax(T& a, T& b, Rest&...args){
   return res;
 }
 
+template <number T>
+auto mygcd(T a, T b) -> T{
+  if(a<b) swap(a,b);
+  if(b == 0) return a;
+  if(a<0) a*=-1;
+  if(b<0) b*=-1;
+
+  T r = b;
+  while(a%b){
+    r = a%b;
+    a = b;
+    b = r;
+  }
+  return r;
+}
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -132,39 +125,29 @@ auto mymax(T& a, T& b, Rest&...args){
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-/*
- * Monotonicly increasing deque (left to right increases).
- * popback while back() > e.
- * popfront if it leaves the window
- * min is front()
+
+/**
+ *  https://www.youtube.com/watch?v=JqWiWJQOQyU&t=71s
  */
 
+const ll p = 1'000'000'007;
+const ll mod_inverse_2 = fast_pow(2ll, p-2, p);
+
 int main() {
-  fast_io;
+  ll n;
+  cin >> n;
+  ll res{0};
 
-  ll n,k,x,a,b,c;
-  ll res = 0;
-  cin >> n >> k >> x >> a >> b >> c;
-  auto gen = [&](){
-    x = (a*x+b) % c;
-  };
+  for(ll i=1, j; i<=n; i=j){
+    ll q = n/i;  
+    j = (n/q) + 1;
+
+    ll sumUpTo_j = (((j%p)*((j-1)%p))%p *mod_inverse_2)%p;
+    ll sumUpTo_i = (((i%p)*((i-1)%p))%p *mod_inverse_2)%p;
+
+    ll sumOfDivisors = (sumUpTo_j-sumUpTo_i+p)% p;
+    res = (res+(q%p)*sumOfDivisors) % p; 
+  }
   
-  deque<pair<ll,ll>> q{{x, 0}};
-
-  for(ll i=1; i<k; ++i){
-    gen();
-    while(!q.empty() && x<q.back().first) q.pop_back();
-    q.push_back({x, i});
-  }
-
-  for(ll i=k; i<=n; ++i){
-    res ^= q.front().first;
-
-    while(!q.empty() && q.front().second<=(i-k)) q.pop_front();
-    gen();
-    while(!q.empty() && x<q.back().first) q.pop_back();
-    q.push_back({x, i});
-  }
-
   cout << res;
 }
