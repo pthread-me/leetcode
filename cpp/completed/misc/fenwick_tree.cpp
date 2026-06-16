@@ -129,94 +129,46 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-const ll n = 7;
-vvl grid(n, vl(n, 0));
-ll ans{0};
-const vector<pair<ll,ll>> dir{{-1,0}, {0,-1}, {1,0}, {0,1}};
-const string sdir = "ULDR";
-string input;
 
+class Fenwick{
+public:
 
-auto valid(ll i, ll j) -> bool {
-  return min(i,j)>-1 && max(i,j)<n && !grid[i][j];
-}
+  vector<ll> T;
 
-
-
-
-/* There are 2 main checks when backtracking:
- *  1) cross check given the bellow arrangements
- *          x               o
- *        o c o     OR    x c x 
- *          x               o
- *      Then any move from c will result in 2 connected components thus no answer
- *
- *  2) Given a point c we can  check if there are 2 connected components 
- *    around c so for example:
- *          xxo                             xxo
- *          oco has only 1 component but    oco  has 2 
- *          ooo                             xoo
- *
- *    one way to do this is to cycle around c and count the number of changes 
- *    from x to o or o to x. if its > 2 then more than 1 component exists so no answer
- *
- *
- */
-auto dfs(ll i, ll j, ull pos){
-  //cout << i << ' ' << j << '\n';
-  if(pos == input.size()){
-    if(i==n-1 && j==0)
-      ++ans;
-    return;
-  }else if(i==n-1 && j==0) return;
-  
-  if(valid(i-1, j) && valid(i+1, j) && !valid(i, j-1) && !valid(i, j+1))
-    return;
-  if(!valid(i-1, j) && !valid(i+1, j) && valid(i, j-1) && valid(i, j+1))
-    return;
-  
-  
-  ll state_change =0;
-  ll prev_state = valid(i-1, j+1);
-
-  for(ll d=1; d>-2; --d){
-    if(valid(i-1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i-1, j+d);
-  }
-
-  if(valid(i, j-1) != prev_state) ++state_change; 
-  prev_state = valid(i, j-1);
-
-  for(ll d=-1; d<2; ++d){
-    if(valid(i+1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i+1, j+d);
-  }
-  if(valid(i, j+1) != prev_state) ++state_change; 
-
-  if(state_change>2) return;
-
-
-  if(input[pos] != '?'){
-    ll d = 0;
-    for(;input[pos]!=sdir[d];++d); 
-    if(valid(i+dir[d].first, j+dir[d].second)){
-      grid[i][j] = true; 
-      dfs(i+dir[d].first, j+dir[d].second, pos+1);
-      grid[i][j] = false; 
+  Fenwick(vector<ll>& A): T(A.size(), 0){
+    for(ll i=0; i<(ll)A.size(); ++i){
+      T[i] += A[i];
+      if(h(i)<T.size()) T[h(i)] += T[i];
     }
-  }else{
-    for(auto [di, dj]: dir){
-      if(valid(i+di, j+dj)){
-        grid[i][j] = true;
-        dfs(i+di, j+dj, pos+1);
-        grid[i][j] = false;
-      } 
-    } 
   }
-}
+
+  auto query(ll i) -> ll {
+    ll res{0};
+    for(; i>=0; i = g(i)-1){
+      res += T[i]; 
+    } 
+    return res;
+  }
+
+  auto update(ull i, ll delta) -> void {
+    for(; i<T.size(); i = h(i)){
+      T[i] += delta; 
+    }
+  }
+
+private:
+  auto g(ull i) -> ull{
+    return i&(i+1);  
+  }
+
+  // j=h(i)  such that g(j)<=i<=j
+  auto h(ull i) -> ull{
+    return i|(i+1);  
+  }
+};
+
 
 int main(){
-  cin >> input;
-  dfs(0, 0, 0);
-  cout << ans;
+
+    
 }

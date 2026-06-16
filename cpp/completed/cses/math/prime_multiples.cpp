@@ -1,32 +1,32 @@
 #include <bits/stdc++.h>
 #include <ext/pb_ds/tree_policy.hpp>
 #include <ext/pb_ds/assoc_container.hpp>
- 
+
 #define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL);
- 
+
 using namespace std;
- 
+
 using ll =  long long;
 using ull =  unsigned long long;
 using vs = vector<string>;
 using vl = vector<ll>;
-using vull = vector<ull>;
+using vul = vector<ull>;
 using vvl = vector<vl>;
 using vvs = vector<vs>;
- 
+
 namespace srv = ranges::views;
 namespace sr = ranges;
 namespace sv = views;
- 
+
 using namespace __gnu_pbds;
- 
+
 template<typename T>
 using multiset_index = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
- 
- 
-static const ll INF = numeric_limits<ll>::max() - 1'000'000'001; // offset possible addition issues
+
+
+static const ll INF = numeric_limits<ll>::max() - 100'000; // offset possible addition issues
 static const ll NINF = numeric_limits<ll>::min();
- 
+
 inline auto ltrim(string_view s) -> string_view {
   if(s.size() == 0) return string_view{s};
   auto it=s.find_last_not_of(" \n\t\f\r\v");
@@ -40,14 +40,14 @@ inline auto rtrim(string_view s) -> string_view {
 inline auto trim(string_view s) -> string_view{
   return ltrim(rtrim(s));
 }
- 
+
 template<typename T>
 concept number = is_integral_v<T>;
 template<typename T>
 concept printable =  requires (ostream& os, T const& t) {
   {os << t} -> same_as<ostream&>;
 };
- 
+
 template<number T>
 constexpr auto mypow(T a, T b) -> T {
   T res = 1;
@@ -56,7 +56,7 @@ constexpr auto mypow(T a, T b) -> T {
   }
   return res;
 }
- 
+
 template<number T>
 constexpr auto fast_pow(T b, T p) -> T {
   T res = 1;
@@ -69,8 +69,8 @@ constexpr auto fast_pow(T b, T p) -> T {
   }
   return res;
 }
- 
- 
+
+
 template<number T>
 constexpr auto fast_pow(T b, T p, T const m) -> T {
   T res = 1;
@@ -81,8 +81,8 @@ constexpr auto fast_pow(T b, T p, T const m) -> T {
   }
   return res;
 }
- 
- 
+
+
 template<number T, typename ...Rest>
 auto mymin(T a, T b, Rest...args){
   T res = min(a, b);
@@ -91,8 +91,8 @@ auto mymin(T a, T b, Rest...args){
   }
   return res;
 }
- 
- 
+
+
 template<number T, typename ...Rest>
 auto mymax(T& a, T& b, Rest&...args){
   T res = max(a, b);
@@ -101,14 +101,14 @@ auto mymax(T& a, T& b, Rest&...args){
   }
   return res;
 }
- 
+
 template <number T>
 auto mygcd(T a, T b) -> T{
   if(a<b) swap(a,b);
   if(b == 0) return a;
   if(a<0) a*=-1;
   if(b<0) b*=-1;
- 
+
   T r = b;
   while(a%b){
     r = a%b;
@@ -117,106 +117,61 @@ auto mygcd(T a, T b) -> T{
   }
   return r;
 }
- 
+
 template<number T>
 auto mylcm(T a, T b) -> T{
   return (a*b) / gcd(a, b);
 }
- 
+
+
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 // SOLUTIONS BELLOW
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-const ll n = 7;
-vvl grid(n, vl(n, 0));
-ll ans{0};
-const vector<pair<ll,ll>> dir{{-1,0}, {0,-1}, {1,0}, {0,1}};
-const string sdir = "ULDR";
-string input;
-
-
-auto valid(ll i, ll j) -> bool {
-  return min(i,j)>-1 && max(i,j)<n && !grid[i][j];
-}
-
-
-
-
-/* There are 2 main checks when backtracking:
- *  1) cross check given the bellow arrangements
- *          x               o
- *        o c o     OR    x c x 
- *          x               o
- *      Then any move from c will result in 2 connected components thus no answer
- *
- *  2) Given a point c we can  check if there are 2 connected components 
- *    around c so for example:
- *          xxo                             xxo
- *          oco has only 1 component but    oco  has 2 
- *          ooo                             xoo
- *
- *    one way to do this is to cycle around c and count the number of changes 
- *    from x to o or o to x. if its > 2 then more than 1 component exists so no answer
+/*
+ *  This is a simple solution of inclusion exclusion:
+ *  Observation:
+ *    1) the number of elemnets <=n that are divisible by p = floor(n/p)
  *
  *
+ *  we start with tuples sized:
+ *    1 -> add the sum of elements divisible by the prod of the tuple
+ *    2 -> subtract the sum of elements divisible by (a*b)
+ *    3 -> add the sum of elements divisible by (a*b*c)
+ *    ...
+ *
+ *  I use a 20 bit mask since k<=20. with popcount to check for add vs sub
  */
-auto dfs(ll i, ll j, ull pos){
-  //cout << i << ' ' << j << '\n';
-  if(pos == input.size()){
-    if(i==n-1 && j==0)
-      ++ans;
-    return;
-  }else if(i==n-1 && j==0) return;
-  
-  if(valid(i-1, j) && valid(i+1, j) && !valid(i, j-1) && !valid(i, j+1))
-    return;
-  if(!valid(i-1, j) && !valid(i+1, j) && valid(i, j-1) && valid(i, j+1))
-    return;
-  
-  
-  ll state_change =0;
-  ll prev_state = valid(i-1, j+1);
-
-  for(ll d=1; d>-2; --d){
-    if(valid(i-1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i-1, j+d);
+int main() {
+  fast_io;
+  ull upper_bound, k; cin >> upper_bound >> k;
+  vl nums(k, 0);
+  for(ull i=0; i<k; ++i){
+    ll c; cin >> c;
+    nums[i] = c;
   }
+  ll total{0}; 
 
-  if(valid(i, j-1) != prev_state) ++state_change; 
-  prev_state = valid(i, j-1);
-
-  for(ll d=-1; d<2; ++d){
-    if(valid(i+1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i+1, j+d);
-  }
-  if(valid(i, j+1) != prev_state) ++state_change; 
-
-  if(state_change>2) return;
-
-
-  if(input[pos] != '?'){
-    ll d = 0;
-    for(;input[pos]!=sdir[d];++d); 
-    if(valid(i+dir[d].first, j+dir[d].second)){
-      grid[i][j] = true; 
-      dfs(i+dir[d].first, j+dir[d].second, pos+1);
-      grid[i][j] = false; 
-    }
-  }else{
-    for(auto [di, dj]: dir){
-      if(valid(i+di, j+dj)){
-        grid[i][j] = true;
-        dfs(i+di, j+dj, pos+1);
-        grid[i][j] = false;
+  for(ull mask=1; mask < (1ull<<k); ++mask){
+    bool addition = popcount(mask) % 2 == 1;
+    ull val{1};
+    for(ull m=mask, i=0; i<k; ++i, m>>=1){
+      if(m&1){
+        if(val > upper_bound/nums[i]){
+          val = 0;
+          break;
+        }
+        val *= nums[i];
       } 
-    } 
-  }
-}
+    }
 
-int main(){
-  cin >> input;
-  dfs(0, 0, 0);
-  cout << ans;
+    if(val>0){
+      bitset<20> prin(mask);
+      if(addition) total += upper_bound/val;
+      else total -= upper_bound/val;
+    }
+  }
+  cout << total;
 }

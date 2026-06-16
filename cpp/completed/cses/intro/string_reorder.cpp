@@ -129,94 +129,51 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-const ll n = 7;
-vvl grid(n, vl(n, 0));
-ll ans{0};
-const vector<pair<ll,ll>> dir{{-1,0}, {0,-1}, {1,0}, {0,1}};
-const string sdir = "ULDR";
-string input;
 
-
-auto valid(ll i, ll j) -> bool {
-  return min(i,j)>-1 && max(i,j)<n && !grid[i][j];
-}
-
-
-
-
-/* There are 2 main checks when backtracking:
- *  1) cross check given the bellow arrangements
- *          x               o
- *        o c o     OR    x c x 
- *          x               o
- *      Then any move from c will result in 2 connected components thus no answer
- *
- *  2) Given a point c we can  check if there are 2 connected components 
- *    around c so for example:
- *          xxo                             xxo
- *          oco has only 1 component but    oco  has 2 
- *          ooo                             xoo
- *
- *    one way to do this is to cycle around c and count the number of changes 
- *    from x to o or o to x. if its > 2 then more than 1 component exists so no answer
- *
- *
- */
-auto dfs(ll i, ll j, ull pos){
-  //cout << i << ' ' << j << '\n';
-  if(pos == input.size()){
-    if(i==n-1 && j==0)
-      ++ans;
-    return;
-  }else if(i==n-1 && j==0) return;
-  
-  if(valid(i-1, j) && valid(i+1, j) && !valid(i, j-1) && !valid(i, j+1))
-    return;
-  if(!valid(i-1, j) && !valid(i+1, j) && valid(i, j-1) && valid(i, j+1))
-    return;
-  
-  
-  ll state_change =0;
-  ll prev_state = valid(i-1, j+1);
-
-  for(ll d=1; d>-2; --d){
-    if(valid(i-1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i-1, j+d);
-  }
-
-  if(valid(i, j-1) != prev_state) ++state_change; 
-  prev_state = valid(i, j-1);
-
-  for(ll d=-1; d<2; ++d){
-    if(valid(i+1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i+1, j+d);
-  }
-  if(valid(i, j+1) != prev_state) ++state_change; 
-
-  if(state_change>2) return;
-
-
-  if(input[pos] != '?'){
-    ll d = 0;
-    for(;input[pos]!=sdir[d];++d); 
-    if(valid(i+dir[d].first, j+dir[d].second)){
-      grid[i][j] = true; 
-      dfs(i+dir[d].first, j+dir[d].second, pos+1);
-      grid[i][j] = false; 
-    }
-  }else{
-    for(auto [di, dj]: dir){
-      if(valid(i+di, j+dj)){
-        grid[i][j] = true;
-        dfs(i+di, j+dj, pos+1);
-        grid[i][j] = false;
-      } 
-    } 
-  }
-}
-
+// Simple greedy where we first check for majority elements if max freq > majority limit
+// then no sol, else if equal we need to place max element, OTHERWISE place the min lex e
 int main(){
-  cin >> input;
-  dfs(0, 0, 0);
-  cout << ans;
+  string s;
+  cin >> s;
+  vector<char> res; res.reserve(s.size());
+
+  vl freq(26, 0);
+  set<char> lex{};
+  for(char c: s){
+    ++freq[c-'A'];
+    lex.insert(c);
+  }
+
+
+  char prev_char = '$';
+  for(ll n=s.size(); n>0; --n){
+    auto it = sr::max_element(freq.begin(), freq.end());  
+    ll i = distance(freq.begin(), it);
+
+    char mc = 'A' + i;
+		ll mf{*it};
+    ll majority_limit = n/2 + 1;
+    
+    if(majority_limit < mf || (majority_limit==mf && prev_char == mc)){
+      cout << -1;
+      exit(0);
+    }
+
+    if(mf==majority_limit){
+      res.push_back(mc);
+      --freq[i];
+      if(freq[i] == 0)lex.erase(mc);
+      prev_char = mc;
+    }else{
+      auto cur = lex.begin();
+      if(prev_char == *cur) cur = next(cur);
+      res.push_back(*cur);
+      --freq[*cur - 'A'];
+      if(freq[*cur - 'A'] == 0) lex.erase(cur);
+      prev_char = *cur;
+    }
+  }
+
+
+  cout << string(res.begin(), res.end());
 }

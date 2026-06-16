@@ -24,7 +24,7 @@ template<typename T>
 using multiset_index = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
  
  
-static const ll INF = numeric_limits<ll>::max() - 1'000'000'001; // offset possible addition issues
+static const ll INF = numeric_limits<ll>::max() - 100'000; // offset possible addition issues
 static const ll NINF = numeric_limits<ll>::min();
  
 inline auto ltrim(string_view s) -> string_view {
@@ -128,95 +128,40 @@ auto mylcm(T a, T b) -> T{
 // SOLUTIONS BELLOW
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+ 
 
-const ll n = 7;
-vvl grid(n, vl(n, 0));
-ll ans{0};
-const vector<pair<ll,ll>> dir{{-1,0}, {0,-1}, {1,0}, {0,1}};
-const string sdir = "ULDR";
-string input;
-
-
-auto valid(ll i, ll j) -> bool {
-  return min(i,j)>-1 && max(i,j)<n && !grid[i][j];
-}
-
-
-
-
-/* There are 2 main checks when backtracking:
- *  1) cross check given the bellow arrangements
- *          x               o
- *        o c o     OR    x c x 
- *          x               o
- *      Then any move from c will result in 2 connected components thus no answer
- *
- *  2) Given a point c we can  check if there are 2 connected components 
- *    around c so for example:
- *          xxo                             xxo
- *          oco has only 1 component but    oco  has 2 
- *          ooo                             xoo
- *
- *    one way to do this is to cycle around c and count the number of changes 
- *    from x to o or o to x. if its > 2 then more than 1 component exists so no answer
- *
+/**
+ *  I init tried backtracking (first cses submission)
+ *  This solution is much simpler, we "dp" on starting position.
+ *  for each elem we look at the prev starting positions (which starts as 0)
+ *  then we can add e to them. In the end we insert e as a starting pos
  *
  */
-auto dfs(ll i, ll j, ull pos){
-  //cout << i << ' ' << j << '\n';
-  if(pos == input.size()){
-    if(i==n-1 && j==0)
-      ++ans;
-    return;
-  }else if(i==n-1 && j==0) return;
+
+int main() {
+  fast_io;
   
-  if(valid(i-1, j) && valid(i+1, j) && !valid(i, j-1) && !valid(i, j+1))
-    return;
-  if(!valid(i-1, j) && !valid(i+1, j) && valid(i, j-1) && valid(i, j+1))
-    return;
+ 
+  ll n, c; cin >> n;
+  vl nums{};
+  unordered_set<ll> seen{};
+
+  for(ll i=0; i<n; ++i) cin >> c, nums.push_back(c);
+  sort(nums.begin(), nums.end());
   
-  
-  ll state_change =0;
-  ll prev_state = valid(i-1, j+1);
-
-  for(ll d=1; d>-2; --d){
-    if(valid(i-1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i-1, j+d);
-  }
-
-  if(valid(i, j-1) != prev_state) ++state_change; 
-  prev_state = valid(i, j-1);
-
-  for(ll d=-1; d<2; ++d){
-    if(valid(i+1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i+1, j+d);
-  }
-  if(valid(i, j+1) != prev_state) ++state_change; 
-
-  if(state_change>2) return;
-
-
-  if(input[pos] != '?'){
-    ll d = 0;
-    for(;input[pos]!=sdir[d];++d); 
-    if(valid(i+dir[d].first, j+dir[d].second)){
-      grid[i][j] = true; 
-      dfs(i+dir[d].first, j+dir[d].second, pos+1);
-      grid[i][j] = false; 
+  for(auto e: nums){
+    vl temp{};
+    for(auto s: seen){
+      temp.push_back(s+e);
     }
-  }else{
-    for(auto [di, dj]: dir){
-      if(valid(i+di, j+dj)){
-        grid[i][j] = true;
-        dfs(i+di, j+dj, pos+1);
-        grid[i][j] = false;
-      } 
-    } 
+    for(auto e: temp) seen.insert(e);
+    seen.insert(e);
   }
-}
 
-int main(){
-  cin >> input;
-  dfs(0, 0, 0);
-  cout << ans;
+  vl res(seen.begin(), seen.end());
+  sort(res.begin(), res.end());
+  cout << res.size() << '\n';
+  for(auto e: res){
+    cout << e << ' ';
+  }
 }

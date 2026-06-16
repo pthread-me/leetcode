@@ -24,7 +24,7 @@ template<typename T>
 using multiset_index = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
  
  
-static const ll INF = numeric_limits<ll>::max() - 1'000'000'001; // offset possible addition issues
+static const ll INF = numeric_limits<ll>::max() - 100'000; // offset possible addition issues
 static const ll NINF = numeric_limits<ll>::min();
  
 inline auto ltrim(string_view s) -> string_view {
@@ -128,95 +128,50 @@ auto mylcm(T a, T b) -> T{
 // SOLUTIONS BELLOW
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
-const ll n = 7;
-vvl grid(n, vl(n, 0));
-ll ans{0};
-const vector<pair<ll,ll>> dir{{-1,0}, {0,-1}, {1,0}, {0,1}};
-const string sdir = "ULDR";
-string input;
-
-
-auto valid(ll i, ll j) -> bool {
-  return min(i,j)>-1 && max(i,j)<n && !grid[i][j];
-}
-
-
-
-
-/* There are 2 main checks when backtracking:
- *  1) cross check given the bellow arrangements
- *          x               o
- *        o c o     OR    x c x 
- *          x               o
- *      Then any move from c will result in 2 connected components thus no answer
- *
- *  2) Given a point c we can  check if there are 2 connected components 
- *    around c so for example:
- *          xxo                             xxo
- *          oco has only 1 component but    oco  has 2 
- *          ooo                             xoo
- *
- *    one way to do this is to cycle around c and count the number of changes 
- *    from x to o or o to x. if its > 2 then more than 1 component exists so no answer
- *
- *
- */
-auto dfs(ll i, ll j, ull pos){
-  //cout << i << ' ' << j << '\n';
-  if(pos == input.size()){
-    if(i==n-1 && j==0)
-      ++ans;
-    return;
-  }else if(i==n-1 && j==0) return;
-  
-  if(valid(i-1, j) && valid(i+1, j) && !valid(i, j-1) && !valid(i, j+1))
-    return;
-  if(!valid(i-1, j) && !valid(i+1, j) && valid(i, j-1) && valid(i, j+1))
-    return;
-  
-  
-  ll state_change =0;
-  ll prev_state = valid(i-1, j+1);
-
-  for(ll d=1; d>-2; --d){
-    if(valid(i-1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i-1, j+d);
-  }
-
-  if(valid(i, j-1) != prev_state) ++state_change; 
-  prev_state = valid(i, j-1);
-
-  for(ll d=-1; d<2; ++d){
-    if(valid(i+1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i+1, j+d);
-  }
-  if(valid(i, j+1) != prev_state) ++state_change; 
-
-  if(state_change>2) return;
-
-
-  if(input[pos] != '?'){
-    ll d = 0;
-    for(;input[pos]!=sdir[d];++d); 
-    if(valid(i+dir[d].first, j+dir[d].second)){
-      grid[i][j] = true; 
-      dfs(i+dir[d].first, j+dir[d].second, pos+1);
-      grid[i][j] = false; 
-    }
-  }else{
-    for(auto [di, dj]: dir){
-      if(valid(i+di, j+dj)){
-        grid[i][j] = true;
-        dfs(i+di, j+dj, pos+1);
-        grid[i][j] = false;
-      } 
-    } 
-  }
-}
-
+ 
 int main(){
-  cin >> input;
-  dfs(0, 0, 0);
-  cout << ans;
+  fast_io;
+  ll n, m;
+  cin >> n >> m;
+
+  vector<vector<pair<ll,ll>>> adj(n, vector<pair<ll,ll>>{});
+  vector<bool> visited(n, false);
+  set<pair<ll,ll>> cost_map{}; cost_map.insert({0,0});
+  vector<ll> cost_lookup(n, INF); cost_lookup[0] = 0;
+
+  for(ll i=0; i<m; ++i){
+    ll s, d, w;
+    cin >> s >> d >> w;
+    adj[s-1].push_back({w, d-1});
+  }
+
+  for(ll i=1; i<n; ++i){
+    cost_map.insert({INF, i});
+  }
+
+
+  while(!cost_map.empty()){
+    ll w, s;
+    tie(w, s) = *cost_map.begin();
+    cost_map.erase(cost_map.begin());
+
+//   println("source: {}, weight: {}, set size: {}", s, w, cost_map.size());
+//   println("{}", adj[s]);
+
+    visited[s] = true;
+
+    for(auto [e, d]: adj[s]){
+      if(visited[d]) continue; 
+      if(cost_lookup[d] > cost_lookup[s] + e){
+        cost_map.erase(pair{cost_lookup[d], d});
+        cost_lookup[d] = cost_lookup[s] + e; 
+        cost_map.insert(pair{cost_lookup[d], d});
+      }
+    }
+  }
+
+  
+  for(auto c: cost_lookup){
+    cout << c << ' ';
+  }
 }

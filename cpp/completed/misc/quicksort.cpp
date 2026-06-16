@@ -19,45 +19,20 @@ namespace sr = ranges;
 namespace sv = views;
 
 using namespace __gnu_pbds;
-
 template<typename T>
 using multiset_index = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
 
 
 static const ll INF = numeric_limits<ll>::max() - 100'000; // offset possible addition issues
 static const ll NINF = numeric_limits<ll>::min();
+static const ull PRIME_PRE_CAL = 100;
 
-inline auto ltrim(string_view s) -> string_view {
-  if(s.size() == 0) return string_view{s};
-  auto it=s.find_last_not_of(" \n\t\f\r\v");
-  return s.substr(0, it+1);
-}
-inline auto rtrim(string_view s) -> string_view {
-  if(s.size()==0) return s;
-  auto it=s.find_first_not_of(" \n\t\f\r\v");
-  return s.substr(it);
-}
-inline auto trim(string_view s) -> string_view{
-  return ltrim(rtrim(s));
-}
-
-template<typename T>
-concept number = is_integral_v<T>;
 template<typename T>
 concept printable =  requires (ostream& os, T const& t) {
   {os << t} -> same_as<ostream&>;
 };
 
-template<number T>
-constexpr auto mypow(T a, T b) -> T {
-  T res = 1;
-  for(;b>0;--b){
-    res *= a; 
-  }
-  return res;
-}
-
-template<number T>
+template<integral T>
 constexpr auto fast_pow(T b, T p) -> T {
   T res = 1;
   while(p>0){
@@ -71,7 +46,7 @@ constexpr auto fast_pow(T b, T p) -> T {
 }
 
 
-template<number T>
+template<integral T>
 constexpr auto fast_pow(T b, T p, T const m) -> T {
   T res = 1;
   while(p){
@@ -83,7 +58,7 @@ constexpr auto fast_pow(T b, T p, T const m) -> T {
 }
 
 
-template<number T, typename ...Rest>
+template<integral T, typename ...Rest>
 auto mymin(T a, T b, Rest...args){
   T res = min(a, b);
   for(auto p: {args...}){
@@ -92,8 +67,7 @@ auto mymin(T a, T b, Rest...args){
   return res;
 }
 
-
-template<number T, typename ...Rest>
+template<integral T, typename ...Rest>
 auto mymax(T& a, T& b, Rest&...args){
   T res = max(a, b);
   for(auto p: {args...}){
@@ -102,7 +76,7 @@ auto mymax(T& a, T& b, Rest&...args){
   return res;
 }
 
-template <number T>
+template <integral T>
 auto mygcd(T a, T b) -> T{
   if(a<b) swap(a,b);
   if(b == 0) return a;
@@ -118,6 +92,23 @@ auto mygcd(T a, T b) -> T{
   return r;
 }
 
+template<integral T>
+auto mylcm(T a, T b) -> T{
+  return (a*b) / gcd(a, b);
+}
+
+template <integral T>
+constexpr auto mylog2(T n){
+  ull largest_power = (sizeof(declval<T>()) * 8) - 1;
+  return largest_power - countl_zero(n);
+}
+
+template <integral T>
+constexpr auto mylog10(T n) -> T{
+  return mylog2(n) * numbers::ln2;
+}
+
+
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -125,36 +116,36 @@ auto mygcd(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-auto T(ll n) -> void{
 
-  set<ll> nums{};
-  for(ll i=2; i<=2*n; ++i) nums.insert(i);
-  
-  cout << 1 << ' ';
+using ll = long long;
+using ull =unsigned long long;
+auto order_partitition(vl& A, ll l, ll r, ll p) -> ll {
+  ll pval = A[p];
 
-  ll prev = 1, cur;
-  for(ll i=1; i<n; ++i){
-    auto it = nums.begin(); nums.erase(it);
-    cur = *it;
+  while(true){
+    while(l<=r && A[l]<pval) ++l;
+    while(r>=l && A[r]>pval) --r;
+    if(l>=r) return r;
+    swap(A[l], A[r]);
+    --r, ++l;
+  }
+}
 
-    nums.erase(prev + cur);
-    cout << cur << ' ';
-    prev = cur;
+auto quicksort(vl& A, ll l, ll r, mt19937& gen) -> void {
+  if(l>=r){
+    return;
   }
 
+  ull p = l + (gen() % (r-l+1));
+  ll m = order_partitition(A, l, r, p);
+  quicksort(A, l, m, gen);
+  quicksort(A, m+1, r, gen);
 }
 
 
 int main() {
-  fast_io;
-  ll t; 
-  cin >> t;
-
-  for(ll i=0; i<t; ++i){
-    ll n; cin >> n;
-    T(n);
-    cout << '\n';
-  }
-
- 
+  mt19937 gen(random_device{}()); 
+  vl A{5,2,3,1};
+  quicksort(A, 0, A.size()-1, gen);
+  println("{}", A);
 }

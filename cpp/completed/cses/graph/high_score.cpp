@@ -128,95 +128,67 @@ auto mylcm(T a, T b) -> T{
 // SOLUTIONS BELLOW
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
-const ll n = 7;
-vvl grid(n, vl(n, 0));
-ll ans{0};
-const vector<pair<ll,ll>> dir{{-1,0}, {0,-1}, {1,0}, {0,1}};
-const string sdir = "ULDR";
-string input;
+ 
+struct edge {
+  ll a,b,w;
+};
 
 
-auto valid(ll i, ll j) -> bool {
-  return min(i,j)>-1 && max(i,j)<n && !grid[i][j];
-}
-
-
-
-
-/* There are 2 main checks when backtracking:
- *  1) cross check given the bellow arrangements
- *          x               o
- *        o c o     OR    x c x 
- *          x               o
- *      Then any move from c will result in 2 connected components thus no answer
- *
- *  2) Given a point c we can  check if there are 2 connected components 
- *    around c so for example:
- *          xxo                             xxo
- *          oco has only 1 component but    oco  has 2 
- *          ooo                             xoo
- *
- *    one way to do this is to cycle around c and count the number of changes 
- *    from x to o or o to x. if its > 2 then more than 1 component exists so no answer
- *
- *
- */
-auto dfs(ll i, ll j, ull pos){
-  //cout << i << ' ' << j << '\n';
-  if(pos == input.size()){
-    if(i==n-1 && j==0)
-      ++ans;
-    return;
-  }else if(i==n-1 && j==0) return;
-  
-  if(valid(i-1, j) && valid(i+1, j) && !valid(i, j-1) && !valid(i, j+1))
-    return;
-  if(!valid(i-1, j) && !valid(i+1, j) && valid(i, j-1) && valid(i, j+1))
-    return;
-  
-  
-  ll state_change =0;
-  ll prev_state = valid(i-1, j+1);
-
-  for(ll d=1; d>-2; --d){
-    if(valid(i-1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i-1, j+d);
-  }
-
-  if(valid(i, j-1) != prev_state) ++state_change; 
-  prev_state = valid(i, j-1);
-
-  for(ll d=-1; d<2; ++d){
-    if(valid(i+1, j+d) != prev_state) ++state_change; 
-    prev_state = valid(i+1, j+d);
-  }
-  if(valid(i, j+1) != prev_state) ++state_change; 
-
-  if(state_change>2) return;
-
-
-  if(input[pos] != '?'){
-    ll d = 0;
-    for(;input[pos]!=sdir[d];++d); 
-    if(valid(i+dir[d].first, j+dir[d].second)){
-      grid[i][j] = true; 
-      dfs(i+dir[d].first, j+dir[d].second, pos+1);
-      grid[i][j] = false; 
-    }
-  }else{
-    for(auto [di, dj]: dir){
-      if(valid(i+di, j+dj)){
-        grid[i][j] = true;
-        dfs(i+di, j+dj, pos+1);
-        grid[i][j] = false;
-      } 
-    } 
-  }
-}
+// modified bellman ford + pred array for inifite cycles
 
 int main(){
-  cin >> input;
-  dfs(0, 0, 0);
-  cout << ans;
+  fast_io;
+
+  ll n, m;
+  cin >> n >> m;
+  vector<ll> vertex_cost(n, NINF); vertex_cost[0] = 0;
+  vector<edge> edges{};
+  vector<ll> pred(n);
+  for(ll i=0; i<n; ++i) pred[i] = i;
+
+
+  for(ll i=0; i<m; ++i){
+    ll a, b, w;
+    cin >> a >> b >> w;
+    edges.push_back(edge{a-1,b-1,w});
+  }
+  
+
+  for(ll i=0; i<n-1; ++i){
+    bool change_flag = false;
+    for(auto e: edges){
+      if(vertex_cost[e.a] > NINF && vertex_cost[e.b] < vertex_cost[e.a] + e.w){
+        change_flag = true;
+        vertex_cost[e.b] = vertex_cost[e.a] + e.w;
+        pred[e.b] = e.a;
+      }
+    }
+    if(!change_flag) break;
+  }
+
+  // finds infinite cycles
+  for(auto e: edges){
+    if(vertex_cost[e.a] > NINF && vertex_cost[e.b] < vertex_cost[e.a] + e.w){
+      vertex_cost[e.b] = INF;
+      pred[e.b] = e.a;
+    }
+  }
+
+  // checking if any vertex along the path from 0 to n-1 is reached via an INF path
+  bool inifitite_path = false;
+  ll cur = n-1;
+  while(cur != 0){
+    if(vertex_cost[cur] == INF){
+      inifitite_path = true;
+      break;
+    }
+    cur = pred[cur];
+  }
+
+  // final check for the 0 vertex aswell for INF paths
+  if(inifitite_path || vertex_cost[0] == INF){
+    cout << -1;
+  }else{
+    cout << vertex_cost[n-1];
+  }
 }
