@@ -10,9 +10,10 @@ set(CMAKE_BUILD_TYPE Debug)
 add_executable(main src/main.cpp)
 
 target_compile_options(main PRIVATE
-  -O3
+  -O0
   -Wextra
   -Wpedantic
+  -Wall
 )
 
 

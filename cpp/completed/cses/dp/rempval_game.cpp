@@ -10,9 +10,8 @@ using ll =  long long;
 using ull =  unsigned long long;
 using vs = vector<string>;
 using vl = vector<ll>;
-using vul = vector<ull>;
+using vull = vector<ull>;
 using vvl = vector<vl>;
-using vvul = vector<vul>;
 using vvs = vector<vs>;
  
 namespace srv = ranges::views;
@@ -130,67 +129,85 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// cycle check
-auto dfs(vvl& adj, vl& status, ll u) -> bool{
-  status[u] = 1;
-  
-  for(auto v: adj[u]){
-    if(status[v] == 0){
-      if(dfs(adj, status, v)) return true;
-    }else if(status[v] == 1){
-      return true; 
-    }
-  }
-  status[u] = 2;
-  return false;
-}
 
-auto post(vvl& adj, vl& vis, ll u, vl& ans) -> void{
-  for(auto c: adj[u]){
-    if(vis[c]) continue;
-    post(adj, vis, c, ans);
-  }
-  vis[u] = 1;
-  ans.push_back(u+1);
-}
+/**
+ *  This is a super interesting question:
+ *
+ *  take the game 4513:
+ *    at the first round the player can take 4 and let opp play on 513
+ *            or take 3 and let opp play on 451
+ *    continue recursivly.
+ *
+ *
+ *  Note: S1 is the player currently playing the role (so roles reverse every turn)
+ *
+ *  The key observation we need are:
+ *    1) the final res of the players S1 and S2 -> S1+S2 = Total
+ *    2) out of the 2 choices we clearlt want to choose the one that maxs our S1
+ *      Now since the Total is constant this means increasing S1 => reducing S2
+ *
+ *    3) keeping track of exact scores is difficult, instead we keep track of 
+ *      "how much ahead  the cur player is after this play" aka S1-S2
+ *
+ *  We keep a 2D dp of the games starting from i and ending at j, initially the
+ *  diagonal dp[i][i] = A[i] since S1 takes A[i] and S2 has nothing so A[i]-0
+ *
+ *  for j-i>1 the recurence is what we described above so:
+ *    dp[i][j] = max(A[i]-dp[i+1][j],  A[j]-dp[i][j-1])
+ *
+ *    so its what S1 gets now - what S2 gets from the remaining interval
+ *
+ *    Since we need i+1 we iter i from n-1 to 0 while j from 0 to n-1
+ *
+ *  Finally after the last iteration we are left with obsv 3) for the interval
+ *  [0,n-1] aka how much ahead is S1 to S2 on the entire array. 
+ *  aka dp[0][n-1] = S1-S2 for the full range.
+ *
+ *  Finally since we have:
+ *  S1+S2 = total
+ *  S1-S2 = dp[0][n-1]
+ *
+ *  we get 2*S1 = total + dp[0][n-1] 
+ *  S1 = (total + dp[0][n-1])/2
+ *
+ *
+ *
+ * Final note, the dp is only half filled starting from the diagonal
+ *
+ */
 
 int main(){
-  ll n,m;
-  cin >> n >> m;
+  ll n;
+  cin >> n;
 
-  vvl adj(n, vl{});
-  vl parent(n, 0); for(ll i=0; i<n; ++i) parent[i] = i;
-  vl ans{}; ans.reserve(n);
-
-
-  for(ll i=0; i<m; ++i){
-    ll a, b;
-    cin >> a >> b;
-    // b after a
-    adj[b-1].push_back(a-1);
-    parent[a-1] = b;
+  vl A{};
+  for(ll i=0; i<n; ++i){
+    ll c; cin >> c;
+    A.push_back(c);
   }
 
 
-  vl vis(n, 0);
-  vl status(n, 0);
+  vvl dp(n, vl(n, 0));
 
+  //init the diag
   for(ll i=0; i<n; ++i){
-    if(status[i] > 0) continue;
-    if(dfs(adj, status, i)){
-      cout << "IMPOSSIBLE";
-      exit(0);
+    for(ll j=0; j<n; ++j){
+      if(i==j) dp[i][j] = A[i];
     }
   }
 
-  for(ll i=0; i<n; ++i){
-    if(i == parent[i]){
-      if(vis[i]) continue;
-      post(adj, vis, i, ans);
+  for(ll i=n-1; i>=0; --i){
+    for(ll j=i+1; j<n; ++j){
+      dp[i][j] = max(A[i]-dp[i+1][j], A[j]-dp[i][j-1]);
     }
   }
 
-  for(auto it = ans.begin(); it != ans.end(); it = next(it)){
-    cout << *it << ' ';
-  }
+  // s1-s2 = dp[0][n-1]
+  ll equation1 = dp[0].back();
+
+  // s1+s2 = total
+  ll total = accumulate(A.begin(), A.end(), 0ll);
+
+  //2*s1 = (total+dp[0][n-1])/2
+  cout << (equation1 + total) /2;
 }

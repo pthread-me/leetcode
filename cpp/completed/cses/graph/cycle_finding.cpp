@@ -130,67 +130,89 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// cycle check
-auto dfs(vvl& adj, vl& status, ll u) -> bool{
-  status[u] = 1;
-  
-  for(auto v: adj[u]){
-    if(status[v] == 0){
-      if(dfs(adj, status, v)) return true;
-    }else if(status[v] == 1){
-      return true; 
-    }
-  }
-  status[u] = 2;
-  return false;
-}
+/**
+ *  This question introduces one improtant observation, but first:
+ *    1) the finding of neg cycles is trivial via bellman ford
+ *    2) it makes sense on the Nth iter to keep tract of an updated
+ *        vertex, save it as an anchor then walk back.
+ *
+ *  Notice that 2) makes a slight mistake, a vertex gets relaxed not necessarly
+ *  for being in a neg cycle, but simply by being reachable from one.
+ *  The solution to this is to walk back n steps from an updated vertex since
+ *  at worst its in the cycle and we get to it else it goes back to a vertex in 
+ *  the cycle.
+ *
+ *  Finally I usually make the condition when dealing with (u,v,w) , if state[u] == INF
+ *  then skip, but this doesnt make sense when searching for a cycle since
+ *  say a vertex x is unreachable from s,but x has an edge (x,x,-2)
+ *  So there is a neg cycle between itself.
+ *
+ */
 
-auto post(vvl& adj, vl& vis, ll u, vl& ans) -> void{
-  for(auto c: adj[u]){
-    if(vis[c]) continue;
-    post(adj, vis, c, ans);
-  }
-  vis[u] = 1;
-  ans.push_back(u+1);
-}
+
+using edge = tuple<ll,ll,ll>;
 
 int main(){
-  ll n,m;
+  ll n, m;
   cin >> n >> m;
 
-  vvl adj(n, vl{});
-  vl parent(n, 0); for(ll i=0; i<n; ++i) parent[i] = i;
+  vector<edge> adj(m); adj.reserve(m);
+  vl state(n, INF);
+  vl parent(n,0);
   vl ans{}; ans.reserve(n);
+
+  for(ll i=0; i<n; ++i) parent[i] = i;
+  state[0]=0;
 
 
   for(ll i=0; i<m; ++i){
-    ll a, b;
-    cin >> a >> b;
-    // b after a
-    adj[b-1].push_back(a-1);
-    parent[a-1] = b;
-  }
-
-
-  vl vis(n, 0);
-  vl status(n, 0);
-
-  for(ll i=0; i<n; ++i){
-    if(status[i] > 0) continue;
-    if(dfs(adj, status, i)){
-      cout << "IMPOSSIBLE";
-      exit(0);
-    }
+    ll u, v, w; 
+    cin >> u >> v >> w;
+    adj.push_back(tuple{u-1,v-1,w});
   }
 
   for(ll i=0; i<n; ++i){
-    if(i == parent[i]){
-      if(vis[i]) continue;
-      post(adj, vis, i, ans);
+    bool change = false;
+    for(auto [u,v,w]: adj){
+      if(state[u]+w < state[v]){
+        change = true;
+        state[v] = state[u]+w;
+        parent[v] = u;
+      }
+    }
+    if(!change) break;
+  }
+
+
+  ll anchor = INF;
+  for(auto [u,v,w]: adj){
+    if(state[u]+w < state[v]){
+      anchor = v;
+      state[v] = state[u]+w;
+      parent[v]=u;
     }
   }
 
-  for(auto it = ans.begin(); it != ans.end(); it = next(it)){
-    cout << *it << ' ';
+  if(anchor == INF){
+    cout << "NO";
+  }else{
+    for(ll i=0; i<n; ++i) anchor = parent[anchor]; 
+
+
+    cout << "YES\n";
+    ll cur = anchor;
+    ans.push_back(cur+1);
+    cur = parent[cur];
+    while(cur != anchor){
+      ans.push_back(cur+1);
+      cur = parent[cur];
+    }
+    ans.push_back(anchor+1);
+
+
+    for(auto rit= ans.rbegin(); rit != ans.rend(); rit = next(rit)){
+      cout << *rit << ' ';
+    }
+    
   }
 }

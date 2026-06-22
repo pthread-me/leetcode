@@ -10,9 +10,8 @@ using ll =  long long;
 using ull =  unsigned long long;
 using vs = vector<string>;
 using vl = vector<ll>;
-using vul = vector<ull>;
+using vull = vector<ull>;
 using vvl = vector<vl>;
-using vvul = vector<vul>;
 using vvs = vector<vs>;
  
 namespace srv = ranges::views;
@@ -130,67 +129,35 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// cycle check
-auto dfs(vvl& adj, vl& status, ll u) -> bool{
-  status[u] = 1;
-  
-  for(auto v: adj[u]){
-    if(status[v] == 0){
-      if(dfs(adj, status, v)) return true;
-    }else if(status[v] == 1){
-      return true; 
-    }
-  }
-  status[u] = 2;
-  return false;
-}
 
-auto post(vvl& adj, vl& vis, ll u, vl& ans) -> void{
-  for(auto c: adj[u]){
-    if(vis[c]) continue;
-    post(adj, vis, c, ans);
-  }
-  vis[u] = 1;
-  ans.push_back(u+1);
-}
 
 int main(){
-  ll n,m;
+  fast_io;
+
+  ll n, m;
   cin >> n >> m;
 
-  vvl adj(n, vl{});
-  vl parent(n, 0); for(ll i=0; i<n; ++i) parent[i] = i;
-  vl ans{}; ans.reserve(n);
-
-
-  for(ll i=0; i<m; ++i){
-    ll a, b;
-    cin >> a >> b;
-    // b after a
-    adj[b-1].push_back(a-1);
-    parent[a-1] = b;
+  multiset<ll> vals{};
+  for(ll i=0; i<n; ++i){
+    ll c; cin >> c;
+    vals.insert(c);
   }
 
+  ll count{0};
+  for(; count<m && !vals.empty(); ++count){
+    ll c; cin >> c;
+    auto it = vals.upper_bound(c);
 
-  vl vis(n, 0);
-  vl status(n, 0);
-
-  for(ll i=0; i<n; ++i){
-    if(status[i] > 0) continue;
-    if(dfs(adj, status, i)){
-      cout << "IMPOSSIBLE";
-      exit(0);
+    if(it == vals.begin() || *prev(it)>c){
+      cout << -1 << '\n';
+    }else{
+      cout << *prev(it) << '\n';
+      vals.erase(prev(it));
     }
   }
 
-  for(ll i=0; i<n; ++i){
-    if(i == parent[i]){
-      if(vis[i]) continue;
-      post(adj, vis, i, ans);
-    }
+  for(; count<m; ++count){
+    cout << -1 << '\n';
   }
 
-  for(auto it = ans.begin(); it != ans.end(); it = next(it)){
-    cout << *it << ' ';
-  }
 }

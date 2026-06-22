@@ -130,67 +130,80 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// cycle check
-auto dfs(vvl& adj, vl& status, ll u) -> bool{
-  status[u] = 1;
-  
-  for(auto v: adj[u]){
-    if(status[v] == 0){
-      if(dfs(adj, status, v)) return true;
-    }else if(status[v] == 1){
-      return true; 
+
+
+/**
+ *  The main observation we want to make in the question is the following.
+ *    Assume that we already know which edge to dicount, then the total cost
+ *    of the path is the min cost of s to u + mincost of v to t + (u,v)/2 
+ *
+ *  With that all we really need to is to test all edges with the above condition.
+ *  to get the min costs we run dikjstras alg from s to all e and all e to v
+ *  the second is equivalemt to v to all e where the edges are reversed
+  */
+
+template <typename T>
+using _3dvec = vector<vector<vector<T>>>;
+using edge = pair<ll,ll>;
+
+auto dij(vector<vector<edge>>& adj, set<edge> q, vl& state){
+  vl vis(state.size(), 0);
+
+  while(!q.empty()){
+    ll s, cw;
+    tie(cw, s) = *q.begin();
+    q.erase(q.begin());
+    vis[s] = 1;
+    
+    for(auto [w, d]: adj[s]){
+      if(vis[d]) continue;
+
+      if(state[d] > cw + w){
+        edge old = {state[d], d};
+        q.erase(old);
+        state[d] = cw + w;
+        q.insert({cw+w, d});
+      } 
     }
   }
-  status[u] = 2;
-  return false;
-}
-
-auto post(vvl& adj, vl& vis, ll u, vl& ans) -> void{
-  for(auto c: adj[u]){
-    if(vis[c]) continue;
-    post(adj, vis, c, ans);
-  }
-  vis[u] = 1;
-  ans.push_back(u+1);
 }
 
 int main(){
-  ll n,m;
+  fast_io;
+  ll n, m;
   cin >> n >> m;
+  
+  _3dvec<edge> adj(2, vector<vector<edge>>(n, vector<edge>{}));
+  vector<set<edge>> queue(2, set<edge>{});
+  vector<vector<ll>> state(2, vector<ll>(n, INF));
 
-  vvl adj(n, vl{});
-  vl parent(n, 0); for(ll i=0; i<n; ++i) parent[i] = i;
-  vl ans{}; ans.reserve(n);
-
+  state[0][0] = 0;
+  state[1][n-1] = 0;
+  queue[0].insert({0,0});
+  queue[1].insert({0,n-1});
+  for(ll i=1; i<n; ++i){
+    queue[0].insert({INF, i}); 
+    queue[1].insert({INF, (n-1)-i}); 
+  }
 
   for(ll i=0; i<m; ++i){
-    ll a, b;
-    cin >> a >> b;
-    // b after a
-    adj[b-1].push_back(a-1);
-    parent[a-1] = b;
+    ll s,d,w;
+    cin >> s >> d >> w;
+    adj[0][s-1].push_back({w, d-1});
+    adj[1][d-1].push_back({w, s-1});
   }
 
 
-  vl vis(n, 0);
-  vl status(n, 0);
+  dij(adj[0], queue[0], state[0]);
+  dij(adj[1], queue[1], state[1]);
 
-  for(ll i=0; i<n; ++i){
-    if(status[i] > 0) continue;
-    if(dfs(adj, status, i)){
-      cout << "IMPOSSIBLE";
-      exit(0);
+
+  ll ans{INF};
+  for(ll u=0; u<n; ++u){
+    for(auto [w,v]: adj[0][u]){
+      ans = min(ans, state[0][u] + state[1][v] + w/2);
     }
   }
 
-  for(ll i=0; i<n; ++i){
-    if(i == parent[i]){
-      if(vis[i]) continue;
-      post(adj, vis, i, ans);
-    }
-  }
-
-  for(auto it = ans.begin(); it != ans.end(); it = next(it)){
-    cout << *it << ' ';
-  }
+  cout << ans;
 }

@@ -10,9 +10,8 @@ using ll =  long long;
 using ull =  unsigned long long;
 using vs = vector<string>;
 using vl = vector<ll>;
-using vul = vector<ull>;
+using vull = vector<ull>;
 using vvl = vector<vl>;
-using vvul = vector<vul>;
 using vvs = vector<vs>;
  
 namespace srv = ranges::views;
@@ -130,67 +129,40 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// cycle check
-auto dfs(vvl& adj, vl& status, ll u) -> bool{
-  status[u] = 1;
-  
-  for(auto v: adj[u]){
-    if(status[v] == 0){
-      if(dfs(adj, status, v)) return true;
-    }else if(status[v] == 1){
-      return true; 
-    }
-  }
-  status[u] = 2;
-  return false;
-}
-
-auto post(vvl& adj, vl& vis, ll u, vl& ans) -> void{
-  for(auto c: adj[u]){
-    if(vis[c]) continue;
-    post(adj, vis, c, ans);
-  }
-  vis[u] = 1;
-  ans.push_back(u+1);
-}
+/*
+ *  This is a simplification of knapsack, were we can add more buckets
+ *  sol is easy we iterate over items by weight decreasing and buckets
+ *  by free space increasing.
+ *
+ *  Since each bucket can only have at most 2 elements regardless of weight
+ *  we remove buckets from the set once we reuse them (aka reuse at most once)
+ */
 
 int main(){
-  ll n,m;
-  cin >> n >> m;
+  ll n, x;
+  cin >> n >> x;
 
-  vvl adj(n, vl{});
-  vl parent(n, 0); for(ll i=0; i<n; ++i) parent[i] = i;
-  vl ans{}; ans.reserve(n);
-
-
-  for(ll i=0; i<m; ++i){
-    ll a, b;
-    cin >> a >> b;
-    // b after a
-    adj[b-1].push_back(a-1);
-    parent[a-1] = b;
-  }
-
-
-  vl vis(n, 0);
-  vl status(n, 0);
-
+  vl A(n, 0);
   for(ll i=0; i<n; ++i){
-    if(status[i] > 0) continue;
-    if(dfs(adj, status, i)){
-      cout << "IMPOSSIBLE";
-      exit(0);
+    ll c; cin >> c;
+    A[i] = c;
+  }
+  sort(A.begin(), A.end());
+
+  multiset<ll> buckets{};
+  buckets.insert(x-A.back());
+  ll ans = 1;
+
+  for(auto e: A | srv::reverse | srv::drop(1)){
+    auto it = buckets.lower_bound(e);
+    if(it == buckets.end()){
+      buckets.insert(x - e);
+      ++ans;
+    }else{
+      ll prev_val = *it;
+      buckets.erase(it);
     }
   }
 
-  for(ll i=0; i<n; ++i){
-    if(i == parent[i]){
-      if(vis[i]) continue;
-      post(adj, vis, i, ans);
-    }
-  }
-
-  for(auto it = ans.begin(); it != ans.end(); it = next(it)){
-    cout << *it << ' ';
-  }
+  cout << ans;
 }

@@ -130,28 +130,33 @@ auto mylcm(T a, T b) -> T{
 ////-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-// cycle check
-auto dfs(vvl& adj, vl& status, ll u) -> bool{
+/**
+ *  DFS with coloring, we keep status that has values 0,1,2. 0 means not visited
+ *  1 is in the current path, 2 means it was traversed but resulted in no cycle.
+ *
+ *
+ *  when a neighboring node v is:
+ *    0 -> we recurse
+ *    1 -> found a cycle
+ *    2 -> ignore
+ *
+ *  finally we return the cycle's anchor v (not forgetting to update parent)
+ */
+auto dfs(vvl& adj, vl& status, vl& parent, ll u) -> ll{
   status[u] = 1;
-  
+  ll res = -1;
+
   for(auto v: adj[u]){
+    parent[v] = u;
     if(status[v] == 0){
-      if(dfs(adj, status, v)) return true;
+      res = dfs(adj, status, parent, v);
+      if(res > -1) return res;
     }else if(status[v] == 1){
-      return true; 
+      return v;
     }
   }
   status[u] = 2;
-  return false;
-}
-
-auto post(vvl& adj, vl& vis, ll u, vl& ans) -> void{
-  for(auto c: adj[u]){
-    if(vis[c]) continue;
-    post(adj, vis, c, ans);
-  }
-  vis[u] = 1;
-  ans.push_back(u+1);
+  return res;
 }
 
 int main(){
@@ -159,38 +164,37 @@ int main(){
   cin >> n >> m;
 
   vvl adj(n, vl{});
-  vl parent(n, 0); for(ll i=0; i<n; ++i) parent[i] = i;
-  vl ans{}; ans.reserve(n);
-
-
   for(ll i=0; i<m; ++i){
-    ll a, b;
-    cin >> a >> b;
-    // b after a
-    adj[b-1].push_back(a-1);
-    parent[a-1] = b;
+    ll u,v;
+    cin >> u >> v;
+    adj[u-1].push_back(v-1);
   }
 
-
-  vl vis(n, 0);
   vl status(n, 0);
+  vl parent(n); for(ll i=0; i<n; ++i) parent[i] = i;
+
 
   for(ll i=0; i<n; ++i){
     if(status[i] > 0) continue;
-    if(dfs(adj, status, i)){
-      cout << "IMPOSSIBLE";
+
+    ll res = dfs(adj, status, parent, i);
+    if(res > -1){
+      vl ans{res};
+      ll cur = parent[res];
+      while(cur != res){
+        ans.push_back(cur);
+        cur = parent[cur];
+      }
+      ans.push_back(res);
+
+
+      cout << ans.size() << '\n'; 
+      for(auto it = ans.rbegin(); it != ans.rend(); it = next(it)){
+        cout << (*it)+1 << ' ';
+      }
+
       exit(0);
     }
   }
-
-  for(ll i=0; i<n; ++i){
-    if(i == parent[i]){
-      if(vis[i]) continue;
-      post(adj, vis, i, ans);
-    }
-  }
-
-  for(auto it = ans.begin(); it != ans.end(); it = next(it)){
-    cout << *it << ' ';
-  }
+  cout << "IMPOSSIBLE";
 }
